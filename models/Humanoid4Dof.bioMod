@@ -1,0 +1,95 @@
+version 4
+
+root_actuated 0
+external_forces 1
+
+
+
+segment Torso
+	rtinmatrix 0
+    	rt 0 0 0 xyz 0 0 0
+    	translations yz
+    	rotations x
+    	ranges
+    	-1    1
+    	0    1.5
+    	-pi/2  pi/6
+    	mass 47.4
+    	com 0 0 0.18
+    	inertia
+    	6 0 0
+    	0 0 0
+    	0 0 0
+	mesh  0 0 0
+	mesh  0 0 0.56
+endsegment
+
+segment Head
+	parent Torso
+	rtinmatrix 0
+    	rt 0 0 0 xyz 0 0 0.56
+    	rotations x
+    	ranges
+    	-pi/6  pi/6
+    	mass 5.41
+    	com 0 0 0.12
+    	inertia
+    	0.12 0 0
+    	0 0 0
+    	0 0 0
+	mesh  0 0 0
+	mesh  0 0 0.24
+endsegment
+	
+segment RLeg
+	parent Torso
+	rtinmatrix 0
+    	rt 0 0 0 xyz 0 0 0
+    	rotations x
+    	ranges
+    	-pi/2  pi/2
+    	mass 15
+    	com 0 0 -0.4
+    	inertia
+    	0.7 0 0
+    	0 0 0
+    	0 0 0
+	mesh  0 0 0
+	mesh  0 0 -0.853
+endsegment
+
+segment LLeg
+	parent Torso
+	rtinmatrix 0
+    	rt 0 0 0 xyz 0 0 0
+    	rotations x
+    	ranges
+    	-pi/2  pi/2
+    	mass 15
+    	com 0 0 -0.4
+    	inertia
+    	0.7 0 0
+    	0 0 0
+    	0 0 0
+	mesh  0 0 0
+	mesh  0 0 -0.853
+endsegment
+
+
+contact RFoot
+	parent RLeg
+	position 0 0 -0.853
+	axis yz
+endcontact
+
+marker RFoot
+	parent RLeg
+	position 0 0 -0.853
+endmarker
+
+marker LFoot
+	parent LLeg
+	position 0 0 -0.853
+endmarker
+
+

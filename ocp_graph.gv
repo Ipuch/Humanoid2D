@@ -1,0 +1,24 @@
+digraph ocp_graph {
+	node [shape=plaintext]
+	OCP [shape=Mdiamond]
+	subgraph cluster_0 {
+		node [color=white style=filled]
+		color=lightgrey style=filled
+		label=<<u><b>Phase #0</b></u>>
+		nlp_node_0 [label=<<b>Model</b>: Humanoid6Dof.bioMod<br/><b>Phase duration</b>: 0.3 s<br/><b>Shooting nodes</b>: 20<br/><b>Dynamics</b>: TORQUE_DRIVEN<br/><b>ODE</b>: RK4<br/><b>Control type</b>: CONSTANT>]
+		param_00 [label=<<u><b>Parameters</b></u><br/> No parameter set>]
+		lagrange_0 [label=<<u><b>Lagrange</b></u><br/>(MINIMIZE_CONTROL)<sup>2</sup><br/><b>Weight</b>: 1<br/><b>key</b>: tau<br/><b>Index in list</b>: 0<br/><br/>(MINIMIZE_QDDOT)<sup>2</sup><br/><b>Weight</b>: 0.01<br/><b>Index in list</b>: 1<br/><br/>(MINIMIZE_QDDOT)<sup>2</sup><br/><b>Weight</b>: 0.01<br/><b>Index in list</b>: 2<br/><br/>(MINIMIZE_STATE)<sup>2</sup><br/><b>Weight</b>: 0.01<br/><b>key</b>: qdot<br/><b>Index in list</b>: 3<br/><br/>(MINIMIZE_COM_VELOCITY)<sup>2</sup><br/><b>Weight</b>: 0.1<br/><b>Index in list</b>: 6<br/><br/>>]
+		mayer_node_0 [label=<<u><b>Mayer</b></u><br/>(MINIMIZE_COM_VELOCITY - 1.500 )<sup>2</sup><br/><b>Weight</b>: 1000<br/><b>Index in list</b>: 4<br/><b>Shooting nodes index</b>: Node.START<br/><br/>(MINIMIZE_COM_VELOCITY - 1.500 )<sup>2</sup><br/><b>Weight</b>: 1000<br/><b>Index in list</b>: 5<br/><b>Shooting nodes index</b>: Node.END<br/><br/>>]
+		constraints_node_0 [label=<<u><b>Constraints</b></u><br/>TRACK_CONTACT_FORCES<br/><b>Min bound</b>: 0<br/><b>Max bound</b>: inf<br/><b>contact_index</b>: 1<br/><b>Index in list</b>: 0<br/><b>Shooting nodes index</b>: all<br/><br/>TRACK_MARKERS<br/><b>Min bound</b>: 0<br/><b>Max bound</b>: 0<br/><b>marker_index</b>: RFoot<br/><b>Index in list</b>: 1<br/><b>Shooting nodes index</b>: 0<br/><br/>TRACK_MARKERS_VELOCITY<br/><b>Min bound</b>: 0<br/><b>Max bound</b>: 0<br/><b>marker_index</b>: RFoot<br/><b>Index in list</b>: 2<br/><b>Shooting nodes index</b>: 0<br/><br/>TRACK_MARKERS<br/><b>Min bound</b>: 0<br/><b>Max bound</b>: 0<br/><b>Target</b>: [0.000 -0.400 0.000 ] <br/><b>marker_index</b>: LFoot<br/><b>Index in list</b>: 3<br/><b>Shooting nodes index</b>: 0<br/><br/>TRACK_MARKERS<br/><b>Min bound</b>: 0<br/><b>Max bound</b>: 0<br/><b>Target</b>: [0.000 0.400 0.000 ] <br/><b>marker_index</b>: LFoot<br/><b>Index in list</b>: 4<br/><b>Shooting nodes index</b>: 20<br/><br/>TRACK_MARKERS<br/><b>Min bound</b>: 0.05<br/><b>Max bound</b>: inf<br/><b>marker_index</b>: LFoot<br/><b>Index in list</b>: 5<br/><b>Shooting nodes index</b>: 0<br/><br/>>]
+	}
+	OCP -> nlp_node_0
+	nlp_node_0 -> param_00 [color=lightgrey]
+	param_00 -> lagrange_0 [color=lightgrey]
+	lagrange_0 -> mayer_node_0 [color=lightgrey]
+	mayer_node_0 -> constraints_node_0 [color=lightgrey]
+	subgraph cluster_phase_transitions {
+		node [color=grey style=filled]
+		color=invis style=""
+		label=<<u><b>Phase transitions</b></u>>
+	}
+}

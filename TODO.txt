@@ -1,0 +1,5 @@
+Add Phase transition on with antisymetric
+Add Phase transition str
+Modèle parametrique
+X Cinématique inverse as initial guess -> need to do outside of human_ocp
+X Add dynamic implicit to graphs -> need to merge branches

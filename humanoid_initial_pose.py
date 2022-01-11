@@ -36,11 +36,11 @@ def set_initial_pose(model_path: str, q0: np.ndarray, target_RFoot: np.ndarray, 
         args=(m, target_RFoot, target_LFoot),
         x0=q0,
         bounds=bounds,
-        verbose=2,
+        verbose=1,
         method="trf",
         jac="3-point",
-        ftol=2.22e-16,
-        gtol=2.22e-16,
+        ftol=1e-10,
+        gtol=1e-10,
     )
 
     return pos.x

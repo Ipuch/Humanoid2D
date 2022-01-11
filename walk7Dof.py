@@ -1,6 +1,6 @@
 import numpy as np
 import biorbd_casadi as biorbd
-
+from casadi import vertcat
 from bioptim import (
     OptimalControlProgram,
     DynamicsFcn,
@@ -20,7 +20,49 @@ from bioptim import (
     CostType,
     PhaseTransitionList,
     PhaseTransitionFcn,
+    PhaseTransition,
+    OptimizationVariableList,
 )
+
+
+def anti_symmetric_cyclic_transition(
+    transition: PhaseTransition,
+    state_pre: OptimizationVariableList,
+    state_post: OptimizationVariableList,
+    first_index: int,
+    second_index: int,
+):
+    """
+    The constraint of the transition. The values from the end of the phase to the next are multiplied by coef to
+    determine the transition. If coef=1, then this function mimics the PhaseTransitionFcn.CONTINUOUS
+
+    Parameters
+    ----------
+    transition: PhaseTransition
+        The ...
+    state_pre: MX
+        The states at the end of a phase
+    state_post: MX
+        The state at the beginning of the next phase
+    first_index: int
+        first state to be concerned
+    second_index: int
+        second state to be concerned
+
+    Returns
+    -------
+    The constraint such that: c(x) = 0
+    """
+
+    # states_mapping can be defined in PhaseTransitionList. For this particular example, one could simply ignore the
+    # mapping stuff (it is merely for the sake of example how to use the mappings)
+    states_pre = transition.states_mapping.to_second.map(state_pre.cx_end)
+    states_post = transition.states_mapping.to_first.map(state_post.cx)
+
+    first_constraint = states_pre[first_index] - states_post[second_index]
+    second_constraint = states_pre[second_index] - states_post[first_index]
+
+    return vertcat(first_constraint, second_constraint)
 
 
 def prepare_ocp(
@@ -68,7 +110,7 @@ def prepare_ocp(
 
     # --- Objective function --- #
     objective_functions = ObjectiveList()
-    objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", phase=0)
+    objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", phase=0, weight=100)
 
     # torso stability
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, phase=0, index=[0, 1, 2], weight=0.01)
@@ -101,16 +143,40 @@ def prepare_ocp(
     constraints.add(
         ConstraintFcn.TRACK_MARKERS, target=np.array([0, 0.4, 0]), node=Node.END, marker_index="LFoot", phase=0
     )
-
-    # proportional shoulders
-    # constraints.add(ConstraintFcn.PROPORTIONAL_STATE, key="qdot", first_dof=5, second_dof=6, coef=-1, node=Node.MID,
-    #                 phase=0)
-    # constraints.add(ConstraintFcn.PROPORTIONAL_STATE, key="qdot", first_dof=5, second_dof=6, coef=-1, node=Node.END,
-    #                 phase=0)
+    # Ensure lift of foot
+    constraints.add(
+        ConstraintFcn.TRACK_MARKERS,
+        index=2,
+        min_bound=0.05,
+        max_bound=np.inf,
+        node=Node.MID,
+        marker_index="LFoot",
+        phase=0,
+    )
 
     phase_transitions = PhaseTransitionList()
-    # phase_transitions.add(PhaseTransitionFcn.CYCLIC, weight=10000, index=2)
-    # phase_transitions.add(custom_phase_transition, phase_pre_idx=2, coef=0.5)
+    phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=2, weight=10)
+    i = 0
+    ii = 2
+    phase_transitions.add(
+        anti_symmetric_cyclic_transition, first_index=3 + i, second_index=4 + i, phase_pre_idx=0)
+    phase_transitions.add(
+        anti_symmetric_cyclic_transition, first_index=5 + i + ii, second_index=6 + i + ii, phase_pre_idx=0)
+
+    phase_transitions.add(
+        anti_symmetric_cyclic_transition,
+        first_index=3 + i + n_q,
+        second_index=4 + i + n_q,
+        phase_pre_idx=0,
+        weight=0.01,
+    )
+    phase_transitions.add(
+        anti_symmetric_cyclic_transition,
+        first_index=5 + i + ii + n_q,
+        second_index=6 + i + ii + n_q,
+        phase_pre_idx=0,
+        weight=0.01,
+    )
 
     x_bounds = BoundsList()
     x_bounds.add(bounds=QAndQDotBounds(model))
@@ -119,11 +185,10 @@ def prepare_ocp(
     x_bounds[0].max[2, :] = 0  # torso bended forward
 
     # Supervised shoulders
-    i = 0
-    x_bounds[0][5 + i, 0] = -np.pi / 6
-    x_bounds[0][6 + i, 0] = np.pi / 6
-    x_bounds[0][5 + i, -1] = np.pi / 6
-    x_bounds[0][6 + i, -1] = -np.pi / 6
+    x_bounds[0][5 + i, 0] = -np.pi / 8
+    x_bounds[0][6 + i, 0] = np.pi / 8
+    x_bounds[0][5 + i, -1] = np.pi / 8
+    x_bounds[0][6 + i, -1] = -np.pi / 8
 
     x_bounds[0][5 + i + n_q, 0] = 0
     x_bounds[0][5 + i + n_q, -1] = 0
@@ -184,7 +249,7 @@ def prepare_ocp(
 
 def main():
     model_path = "models/Humanoid7Dof.bioMod"
-    n_shooting = 50
+    n_shooting = 10
     ode_solver = OdeSolver.RK4(n_integration_steps=5)
     # ode_solver = OdeSolver.COLLOCATION()
     time = 0.3
@@ -212,7 +277,21 @@ def main():
     # --- Show results --- #
     sol.print()
     sol.animate()
-    sol.graphs(show_bounds=True)
+    # sol.graphs(show_bounds=True)
+
+    print("verify phase transitions")
+    i = 0
+    ii = 2
+
+    print(sol.states["q"][3 + i , 0] - sol.states["q"][4 + i , -1]*180/np.pi)
+    print(sol.states["q"][4 + i , 0] - sol.states["q"][3 + i , -1]*180/np.pi)
+    print(sol.states["qdot"][3 + ii, 0] - sol.states["qdot"][4 + i , -1]*180/np.pi)
+    print(sol.states["qdot"][4 + i , 0] - sol.states["qdot"][3 + i , -1]*180/np.pi)
+
+    print(sol.states["q"][5 + i + ii, 0] - sol.states["q"][6 + i + ii, -1]*180/np.pi)
+    print(sol.states["q"][6 + i + ii, 0] - sol.states["q"][5 + i + ii, -1]*180/np.pi)
+    print(sol.states["qdot"][5 + i + ii, 0] - sol.states["qdot"][6 + i + ii, -1]*180/np.pi)
+    print(sol.states["qdot"][6 + i + ii, 0] - sol.states["qdot"][5 + i + ii, -1]*180/np.pi)
 
 
 def plot_com(x, nlp):

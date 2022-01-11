@@ -1,6 +1,6 @@
 import numpy as np
 import biorbd_casadi as biorbd
-from casadi import MX
+from casadi import MX, vertcat
 from bioptim import (
     OptimalControlProgram,
     DynamicsFcn,
@@ -23,6 +23,46 @@ from bioptim import (
     PhaseTransition,
     OptimizationVariableList,
 )
+
+
+def anti_symmetric_cyclic_transition(
+    transition: PhaseTransition,
+    state_pre: OptimizationVariableList,
+    state_post: OptimizationVariableList,
+    first_index: int,
+    second_index: int,
+):
+    """
+    The constraint of the transition. The values from the end of the phase to the next are multiplied by coef to
+    determine the transition. If coef=1, then this function mimics the PhaseTransitionFcn.CONTINUOUS
+
+    Parameters
+    ----------
+    transition: PhaseTransition
+        The ...
+    state_pre: MX
+        The states at the end of a phase
+    state_post: MX
+        The state at the beginning of the next phase
+    first_index: int
+        first state to be concerned
+    second_index: int
+        second state to be concerned
+
+    Returns
+    -------
+    The constraint such that: c(x) = 0
+    """
+
+    # states_mapping can be defined in PhaseTransitionList. For this particular example, one could simply ignore the
+    # mapping stuff (it is merely for the sake of example how to use the mappings)
+    states_pre = transition.states_mapping.to_second.map(state_pre.cx_end)
+    states_post = transition.states_mapping.to_first.map(state_post.cx)
+
+    first_constraint = states_pre[first_index] - states_post[second_index]
+    second_constraint = states_pre[second_index] - states_post[first_index]
+
+    return vertcat(first_constraint, second_constraint)
 
 
 def prepare_ocp(
@@ -100,8 +140,8 @@ def prepare_ocp(
     )
 
     phase_transitions = PhaseTransitionList()
-    # phase_transitions.add(PhaseTransitionFcn.CYCLIC, weight=10000, index=2)  # index is not working
-    phase_transitions.add(custom_phase_transition, phase_pre_idx=0, coef=0.5)
+    phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=[2, 3], weight=1000)
+    phase_transitions.add(anti_symmetric_cyclic_transition, first_index=3, second_index=4, phase_pre_idx=0, weight=1000)
 
     x_bounds = BoundsList()
     x_bounds.add(bounds=QAndQDotBounds(model))
@@ -141,7 +181,7 @@ def prepare_ocp(
 
 def main():
     model_path = "models/Humanoid4Dof.bioMod"
-    n_shooting = 50
+    n_shooting = 10
     ode_solver = OdeSolver.RK4(n_integration_steps=5)
     # ode_solver = OdeSolver.COLLOCATION()
     time = 0.3
@@ -161,13 +201,17 @@ def main():
     for i, nlp in enumerate(ocp.nlp):
         ocp.add_plot("CoM", lambda t, x, u, p: plot_com(x, nlp), phase=i, legend=["CoM", "CoM_dot"])
 
-    solv = Solver.IPOPT(show_online_optim=True, show_options=dict(show_bounds=True))
+    solv = Solver.IPOPT(show_online_optim=False, show_options=dict(show_bounds=True))
     sol = ocp.solve(solv)
 
     # --- Show results --- #
     sol.print()
-    sol.animate()
-    sol.graphs(show_bounds=True)
+    # sol.animate()
+    # sol.graphs(show_bounds=True)
+
+    print("verify phase transitions")
+    print(sol.states["q"][3, 0] - sol.states["q"][4, -1])
+    print(sol.states["q"][4, 0] - sol.states["q"][3, -1])
 
 
 def plot_com(x, nlp):

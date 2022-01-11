@@ -1,12 +1,10 @@
-import numpy as np
+import os, shutil
 from Comparison import ComparisonAnalysis, ComparisonParameters
-from bioptim import OdeSolver
 import pickle
 from humanoid_2d import Humanoid2D
-from bioptim import OdeSolver
 from humanoid_ocp import HumanoidOcp
-from bioptim import Solver
-import os, shutil
+from bioptim import Solver, OdeSolver
+
 
 nstep = 1
 ode_solver = [
@@ -19,19 +17,20 @@ ode_solver = [
     OdeSolver.COLLOCATION(polynomial_degree=3, method="legendre"),
     OdeSolver.COLLOCATION(polynomial_degree=9, method="legendre"),
 ]
-tolerance = [1, 1e-2, 1e-3, 1e-5, 1e-8]  # stay in scientific writting i.e. 1eX
-n_shooting = [5, 10, 20, 40]
-implicit_dynamics = [False]
+# tolerance = [1, 1e-2, 1e-3, 1e-5, 1e-8]  # stay in scientific writting i.e. 1eX
+# Est-ce qu'il sort avant?
+# n_shooting = [5, 10, 20, 40]
+# implicit_dynamics = [False]
 # ode_solver = [
 #     OdeSolver.RK4(n_integration_steps=nstep),
 #     OdeSolver.COLLOCATION(polynomial_degree=9, method="legendre"),
 # ]
-# tolerance = [
-#     1,
-#     1e-2,
-# ]  # stay in scientific writting i.e. 1eX
-# n_shooting = [5, 10]
-# implicit_dynamics = [False]
+tolerance = [
+    # 1e-2,
+    1e-6,
+]  # stay in scientific writting i.e. 1eX
+n_shooting = [10, 20]
+implicit_dynamics = [False, True]
 
 
 def delete_files(folder: str):
@@ -58,7 +57,7 @@ def define_res_path(name: str):
 
 
 def main():
-    model_path = Humanoid2D.HUMANOID_3DOF
+    model_path = Humanoid2D.HUMANOID_4DOF
     out_path = define_res_path(model_path.name)
 
     comparison_parameters = ComparisonParameters(
@@ -84,21 +83,8 @@ def main():
     pickle.dump(comp, f)
     f.close()
 
-    comp.graphs(res_path=out_path, show=True)
-    comp.graphs(
-        res_path=out_path,
-        first_parameter="n_shooting",
-        second_parameter="ode_solver",
-        third_parameter="tolerance",
-        show=True,
-    )
-    comp.graphs(
-        res_path=out_path,
-        first_parameter="n_shooting",
-        second_parameter="tolerance",
-        third_parameter="ode_solver",
-        show=True,
-    )
+    # comp.graphs(res_path=out_path, fixed_parameters={"implicit_dynamics": True}, show=True)
+    comp.graphs(second_parameter="n_shooting", third_parameter="implicit_dynamics", res_path=out_path, show=True)
 
 
 if __name__ == "__main__":

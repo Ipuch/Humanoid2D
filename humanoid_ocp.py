@@ -36,6 +36,7 @@ class HumanoidOcp:
         control_type: ControlType = ControlType.CONSTANT,
         ode_solver: OdeSolver = OdeSolver.COLLOCATION(),
         implicit_dynamics: bool = False,
+        semi_implicit_dynamics: bool = False,
         step_length: float = 0.8,
         right_foot_location: np.array = np.zeros(3),
     ):
@@ -46,6 +47,7 @@ class HumanoidOcp:
         self.control_type = control_type
         self.ode_solver = ode_solver
         self.implicit_dynamics = implicit_dynamics
+        self.semi_implicit_dynamics = semi_implicit_dynamics
 
         if biorbd_model_path is not None:
             self.biorbd_model = biorbd.Model(biorbd_model_path)
@@ -107,6 +109,7 @@ class HumanoidOcp:
                 n_threads=n_threads,
                 control_type=self.control_type,
                 ode_solver=ode_solver,
+                use_sx=True,
             )
 
     def _set_head(self):
@@ -134,18 +137,22 @@ class HumanoidOcp:
                 break
 
     def _set_dynamics(self):
-        warnings.warn("not implemented under this version of bioptim")
-        # self.dynamics.add(
-        #     DynamicsFcn.TORQUE_DRIVEN, implicit_dynamics=self.implicit_dynamics, with_contact=True, phase=0
-        # )
-        self.dynamics.add(DynamicsFcn.TORQUE_DRIVEN, with_contact=True, phase=0)
+        # warnings.warn("not implemented under this version of bioptim")
+        self.dynamics.add(
+            DynamicsFcn.TORQUE_DRIVEN, implicit_dynamics=self.implicit_dynamics, with_contact=True, phase=0
+        )
+        # self.dynamics.add(DynamicsFcn.TORQUE_DRIVEN, with_contact=True, phase=0)
 
     def _set_objective_functions(self):
         # --- Objective function --- #
         self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, key="tau", phase=0)
 
+        idx_stability = [0, 1, 2]
+        if self.has_head:
+            idx_stability.append(3)
+
         # torso stability
-        self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, phase=0, index=[0, 1, 2], weight=0.01)
+        self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, phase=0, index=idx_stability, weight=0.01)
 
         # head stability
         if self.has_head:
@@ -175,10 +182,17 @@ class HumanoidOcp:
         )  # FP0 > 0 en Z
 
         # contact node at zero position and zero speed
+        # node = Node.ALL if self.implicit_dynamics else Node.START
+        node = Node.START
         self.constraints.add(
-            ConstraintFcn.TRACK_MARKERS, node=Node.START, target=self.right_foot_location, marker_index="RFoot", phase=0
+            ConstraintFcn.TRACK_MARKERS, node=node, target=self.right_foot_location, marker_index="RFoot", phase=0
         )
-        self.constraints.add(ConstraintFcn.TRACK_MARKERS_VELOCITY, node=Node.START, marker_index="RFoot", phase=0)
+        self.constraints.add(ConstraintFcn.TRACK_MARKERS_VELOCITY, node=node, marker_index="RFoot", phase=0)
+        # node = Node.END
+        # self.constraints.add(
+        #     ConstraintFcn.TRACK_MARKERS, node=node, target=self.right_foot_location, marker_index="RFoot", phase=0
+        # )
+        # self.constraints.add(ConstraintFcn.TRACK_MARKERS_VELOCITY, node=node, marker_index="RFoot", phase=0)
 
         # first and last step constraints
         self.constraints.add(
@@ -257,6 +271,13 @@ class HumanoidOcp:
             # x_bounds[0].max[n_q + 5, 1] = 5  # velocity of right shoulder positive
         if self.implicit_dynamics:
             self.u_bounds.add(
+                [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot
+                + [self.qddot_min] * self.biorbd_model.nbContacts(),
+                [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot
+                + [self.qddot_max] * self.biorbd_model.nbContacts(),
+            )
+        elif self.semi_implicit_dynamics:
+            self.u_bounds.add(
                 [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot,
                 [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot,
             )
@@ -314,6 +335,9 @@ class HumanoidOcp:
     def _set_initial_controls(self, U0: np.array = None):
         if U0 is None:
             if self.implicit_dynamics:
+                self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot
+                                           + [5] * self.biorbd_model.nbContacts())
+            elif self.semi_implicit_dynamics:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
             else:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau)

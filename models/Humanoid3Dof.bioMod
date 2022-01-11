@@ -19,6 +19,7 @@ segment Torso
             0 0 0
 	mesh  0 0 0
 	mesh  0 0 0.7
+	externalforceindex 0
 endsegment
 	
 segment RLeg
@@ -36,6 +37,7 @@ segment RLeg
             0 0 0
 	mesh  0 0 0
 	mesh  0 0 -0.853
+	externalforceindex 1
 endsegment
 
 segment LLeg
@@ -53,6 +55,7 @@ segment LLeg
             0 0 0
 	mesh  0 0 0
 	mesh  0 0 -0.853
+	externalforceindex 2
 endsegment
 
 

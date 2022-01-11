@@ -39,12 +39,12 @@ def filename(params: dict):
 
 class ComparisonParameters:
     def __init__(
-        self,
-        biorbd_model_path: Union[str, list] = None,
-        ode_solver: Union[OdeSolver, list] = None,
-        tolerance: Union[float, list] = None,
-        n_shooting: Union[int, list] = None,
-        implicit_dynamics: Union[bool, list] = False,
+            self,
+            biorbd_model_path: Union[str, list] = None,
+            ode_solver: Union[OdeSolver, list] = None,
+            tolerance: Union[float, list] = None,
+            n_shooting: Union[int, list] = None,
+            implicit_dynamics: Union[bool, list] = False,
     ):
 
         self.biorbd_model_path = self._is_a_list(biorbd_model_path)
@@ -100,6 +100,18 @@ class ComparisonParameters:
             list_combinations.append(dict(zip(keys, instance)))
         self.product_list = list_combinations
         print(self.product_list)
+
+    def get_parameter(self, parameter_name):
+        if parameter_name in self.parameters_not_compared:
+            return self.parameters_not_compared[parameter_name]
+        elif parameter_name in self.parameters_compared:
+            return self.parameters_compared[parameter_name]
+        else:
+            raise ValueError(f"This parameter {parameter_name} is not in this ComparisonParameters object.")
+
+    def size(self, parameter_name):
+        return 1 if not isinstance(self.get_parameter(parameter_name), list) else len(
+            self.get_parameter(parameter_name))
 
 
 class ComparisonAnalysis:
@@ -157,17 +169,21 @@ class ComparisonAnalysis:
             consistency = compute_error_single_shooting(
                 sol, cur_ocp.nlp[0].tf, integrator=SolutionIntegrator.SCIPY_DOP853
             )
+            # continuity_consistency = compute_error_single_shooting(
+            #     sol, cur_ocp.nlp[0].tf, integrator=None
+            # )
             values_to_add = {
                 "biorbd_model_path": biorbd_model_path,
                 "ode_solver": ode_solver,
                 "n_shooting": n_shooting,
                 "tolerance": tol,
-                "implicit dynamics": implicit_dynamics,
+                "implicit_dynamics": implicit_dynamics,
                 "iter": sol.iterations,
                 "time": sol.real_time_to_optimize,
                 "convergence": sol.status,
                 "cost": np.squeeze(sol.cost.toarray()),
-                "constraints": np.sqrt(np.mean(sol.constraints.toarray() ** 2)),
+                "constraints": np.mean(abs(sol.constraints.toarray())),
+                "constraints_RMSE": np.sqrt(np.mean(sol.constraints.toarray() ** 2)),
                 "translation consistency": consistency[0],
                 "angular consistency": consistency[1],
                 "states_ss": integrate_sol(cur_ocp, sol),
@@ -190,20 +206,165 @@ class ComparisonAnalysis:
     # def initial_guess(self):
 
     def graphs(
-        self,
-        first_parameter: str = "ode_solver",
-        second_parameter: str = "n_shooting",
-        third_parameter: str = "tolerance",
-        res_path: str = None,
-        show: bool = True,
-        figsize: tuple = (12, 12),
-        tick_width: float = 0.2,
-        dot_width: float = 0.03,
-        size: int = 10,
-        marker: str = "o",
-        alpha: float = 1,
-        markeredgewidth=0.1,
-        markeredgecolor="black",
+            self,
+            first_parameter: str = "ode_solver",
+            second_parameter: str = "n_shooting",
+            third_parameter: str = "tolerance",
+            fixed_parameters: dict = {},
+            res_path: str = None,
+            show: bool = True,
+            figsize: tuple = (12, 12),
+            tick_width: float = 0.2,
+            dot_width: float = 0.03,
+            size: int = 10,
+            marker: str = "o",
+            alpha: float = 1,
+            markeredgewidth=0.1,
+            markeredgecolor="black",
+    ):
+        def abscissa_computations(nb_first: int, nb_second: int, width: float = tick_width):
+            x = np.arange(nb_first)
+            ticks = np.zeros((nb_first, nb_second))
+            for i in range(nb_second):
+                ticks[:, i] = x + (-nb_second / 2 + 1 / 2 + i) * width
+            return ticks
+
+        def abscissa_offsets(ticks: np.array, nb_elements: int, offset_num: int, width: float = dot_width):
+            return ticks + (-nb_elements / 2 + 1 / 2 + offset_num) * width
+
+        all_param = [first_parameter, second_parameter, third_parameter]
+        param_to_be_fixed = set(list(self.Parameters.parameters_compared.keys())) - set(all_param)
+        param_left = param_to_be_fixed - set(list(fixed_parameters.keys()))
+
+        if bool(param_left):
+            raise ValueError(f" The parameters need to be set for {param_left}")
+
+        # set values for varying parameters not considered in these graph
+        df = self.df
+        for param in fixed_parameters:
+            df = self.df[df[param] == fixed_parameters[param]]
+
+        n1 = self.Parameters.size(first_parameter)
+        n2 = self.Parameters.size(second_parameter)
+        n3 = self.Parameters.size(third_parameter)
+
+        pal = sns.color_palette(palette="coolwarm", n_colors=n3)
+        pal.reverse()
+
+        first_parameter_labels = [i.__str__() for i in
+                                  self.Parameters.get_parameter(first_parameter)] if n1 > 1 else [str(
+            self.Parameters.get_parameter(first_parameter))]
+        second_parameter_labels = [str(j) for j in
+                                   self.Parameters.get_parameter(second_parameter)] * n1 if n2 > 1 else [str(
+            self.Parameters.get_parameter(second_parameter))] * n1
+        third_parameter_labels = list(map(str, self.Parameters.get_parameter(third_parameter))) if n3 > 1 else [str(
+            self.Parameters.get_parameter(third_parameter))]
+
+        args = ["time", "iter", "cost", "constraints", "translation consistency", "angular consistency"]
+        args_y_label = [
+            "time (s)",
+            "iterations",
+            "cost function value",
+            "constraints",
+            "Translation consistency (mm)",
+            "Angular consistency (deg)",
+        ]
+        if n2 * tick_width >= 1:
+            tick_width = 1 / n2 - 0.1
+        x_ticks = abscissa_computations(n1, n2, width=tick_width)
+
+        for i in range(len(args)):
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+            # Plot dots
+            T = [self.Parameters.get_parameter(third_parameter)] if not isinstance(
+                self.Parameters.get_parameter(third_parameter), list) else self.Parameters.get_parameter(
+                third_parameter)
+            for ii, i_3rd in enumerate(T):
+                # Get elements in dataframe TODO: Exclude other varying conditions if any
+                ddf = df[df[third_parameter] == i_3rd]
+                D = ddf.pivot(index=first_parameter, columns=second_parameter, values=args[i])
+
+                plt.plot(
+                    abscissa_offsets(x_ticks, n3, ii, width=dot_width).T,
+                    D.values.T,
+                    marker,
+                    markerfacecolor=pal[ii],
+                    ms=size,
+                    markeredgecolor=markeredgecolor,
+                    markeredgewidth=markeredgewidth,
+                    alpha=alpha,
+                )
+
+            AX = ax
+            y_max = AX.get_ylim()
+
+            # Abscissa labels
+            AX.set_xticks(x_ticks.ravel())
+            AX.set_xticklabels(second_parameter_labels)
+            plt.setp(AX.get_xticklabels(), rotation=20)
+
+            # Plot axis legends
+            AX.set_ylabel(args_y_label[i])
+            AX.set_xlabel(second_parameter)
+            AX.set_yscale("log")
+
+            # Plot titles of first parameters
+            for ii in range(n1):
+                t = AX.text(ii, y_max[1], first_parameter_labels[ii], ha="center", va="bottom", rotation=0, size=9)
+            AX.spines["top"].set_visible(False)
+            AX.spines["right"].set_visible(False)
+
+            if np.min(y_max) > 0:
+                AX.set_ylim(y_max)
+
+            # Set vertical lines
+            AX.vlines(np.arange(0, n1 - 1) + 0.5, ymin=0, ymax=y_max[1], color="black", ls="--")
+            temp = np.arange(0, n1 + 1) - 0.5
+            x_lim = (np.min(temp), np.max(temp))
+            AX.set_xlim(x_lim)
+
+            # Build the legend for third parameter out of the axes
+            h = []
+            for ii in range(n3):
+                h_tol = AX.scatter(
+                    [],
+                    [],
+                    c=np.array([pal[ii]]),
+                    marker=marker,
+                    s=size,
+                )
+                h.append(h_tol)
+            Title = third_parameter
+            Title = Title[0].upper() + Title[1:]
+            plt.legend(
+                handles=h,
+                labels=third_parameter_labels,
+                title=Title,
+                loc=(1.04, 0),
+            )
+
+            plt.tight_layout()
+            if res_path is not None:
+                plt.savefig(f"{res_path}/{args[i]}_{first_parameter}_{second_parameter}_{third_parameter}.jpg")
+        if show:
+            plt.show()
+
+    def graphs_states(
+            self,
+            first_parameter: str = "ode_solver",
+            second_parameter: str = "n_shooting",
+            third_parameter: str = "tolerance",
+            res_path: str = None,
+            show: bool = True,
+            figsize: tuple = (12, 12),
+            tick_width: float = 0.2,
+            dot_width: float = 0.03,
+            size: int = 10,
+            marker: str = "o",
+            alpha: float = 1,
+            markeredgewidth=0.1,
+            markeredgecolor="black",
     ):
         def abscissa_computations(nb_first: int, nb_second: int, width: float = tick_width):
             x = np.arange(nb_first)

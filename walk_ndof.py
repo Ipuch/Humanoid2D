@@ -7,7 +7,7 @@ from bioptim import Solver
 
 def main():
     n_shooting = 10
-    ode_solver = OdeSolver.RK4(n_integration_steps=1)
+    ode_solver = OdeSolver.RK4(n_integration_steps=2)
     # ode_solver = OdeSolver.COLLOCATION()
     time = 0.3
     n_threads = 8
@@ -29,7 +29,7 @@ def main():
     humanoid.ocp.add_plot_penalty(CostType.ALL)
     # humanoid.ocp.print()
 
-    solv = Solver.IPOPT(show_online_optim=True, show_options=dict(show_bounds=True))
+    solv = Solver.IPOPT(show_online_optim=False, show_options=dict(show_bounds=True))
     solv.set_print_level(5)
     sol = humanoid.ocp.solve(solv)
 

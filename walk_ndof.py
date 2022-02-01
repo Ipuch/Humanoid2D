@@ -1,18 +1,18 @@
 from humanoid_2d import Humanoid2D
 from viz import add_custom_plots
-from bioptim import OdeSolver, CostType
+from bioptim import OdeSolver, CostType, MultiBodyDynamics
 from humanoid_ocp import HumanoidOcp
 from bioptim import Solver
 
 
 def main():
     n_shooting = 10
-    ode_solver = OdeSolver.RK4(n_integration_steps=2)
+    ode_solver = OdeSolver.RK4(n_integration_steps=1)
     # ode_solver = OdeSolver.COLLOCATION()
     time = 0.3
     n_threads = 8
     # for human in Humanoid2D:
-    human = Humanoid2D.HUMANOID_3DOF
+    human = Humanoid2D.HUMANOID_10DOF
     model_path = human
     print(human)
     # --- Solve the program --- #
@@ -21,7 +21,7 @@ def main():
         phase_time=time,
         n_shooting=n_shooting,
         ode_solver=ode_solver,
-        implicit_dynamics=True,
+        multibody_dynamics=MultiBodyDynamics.SEMI_EXPLICIT,
         n_threads=n_threads,
     )
 
@@ -35,9 +35,9 @@ def main():
 
     # --- Show results --- #
     print(sol.status)
-    # sol.print()
-    sol.animate()
-    sol.graphs(show_bounds=True)
+    sol.print()
+    # sol.animate(n_frames=-1)
+    # sol.graphs(show_bounds=True)
 
 
 if __name__ == "__main__":

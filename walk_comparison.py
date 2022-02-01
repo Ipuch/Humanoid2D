@@ -3,15 +3,13 @@ from Comparison import ComparisonAnalysis, ComparisonParameters
 import pickle
 from humanoid_2d import Humanoid2D
 from humanoid_ocp import HumanoidOcp
-from bioptim import Solver, OdeSolver
-
+from bioptim import Solver, OdeSolver, MultiBodyDynamics
 
 nstep = 1
 ode_solver = [
     OdeSolver.RK4(n_integration_steps=nstep),
     OdeSolver.RK4(n_integration_steps=nstep * 2),
     OdeSolver.RK8(n_integration_steps=nstep),
-    OdeSolver.CVODES(),
     OdeSolver.IRK(polynomial_degree=3, method="legendre"),
     OdeSolver.IRK(polynomial_degree=9, method="legendre"),
     OdeSolver.COLLOCATION(polynomial_degree=3, method="legendre"),
@@ -29,8 +27,8 @@ tolerance = [
     # 1e-2,
     1e-6,
 ]  # stay in scientific writting i.e. 1eX
-n_shooting = [10, 20]
-implicit_dynamics = [False, True]
+n_shooting = [10, 20, 40]
+multibody_dynamics = [MultiBodyDynamics.IMPLICIT, MultiBodyDynamics.SEMI_EXPLICIT, MultiBodyDynamics.EXPLICIT]
 
 
 def delete_files(folder: str):
@@ -64,7 +62,7 @@ def main():
         ode_solver=ode_solver,
         tolerance=tolerance,
         n_shooting=n_shooting,
-        implicit_dynamics=implicit_dynamics,
+        multibody_dynamics=multibody_dynamics,
         biorbd_model_path=model_path.value,
     )
 
@@ -83,8 +81,9 @@ def main():
     pickle.dump(comp, f)
     f.close()
 
-    # comp.graphs(res_path=out_path, fixed_parameters={"implicit_dynamics": True}, show=True)
-    comp.graphs(second_parameter="n_shooting", third_parameter="implicit_dynamics", res_path=out_path, show=True)
+    # comp.graphs(res_path=out_path, fixed_parameters={"multibody_dynamics": True}, show=True)
+    comp.graphs(second_parameter="n_shooting", third_parameter="multibody_dynamics", res_path=out_path, show=True)
+    # comp.graphs(second_parameter="n_shooting", third_parameter="multibody_dynamics", res_path=out_path, show=True)
 
 
 if __name__ == "__main__":

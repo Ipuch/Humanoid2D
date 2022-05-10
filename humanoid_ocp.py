@@ -22,7 +22,7 @@ from bioptim import (
     InterpolationType,
     PhaseTransitionList,
     PhaseTransitionFcn,
-    MultiBodyDynamics,
+    Transcription,
 )
 from humanoid_initial_pose import set_initial_pose
 
@@ -36,7 +36,7 @@ class HumanoidOcp:
         n_threads: int = 8,
         control_type: ControlType = ControlType.CONSTANT,
         ode_solver: OdeSolver = OdeSolver.COLLOCATION(),
-        multibody_dynamics: MultiBodyDynamics = MultiBodyDynamics.EXPLICIT,
+        rigidbody_dynamics: Transcription = Transcription.ODE,
         step_length: float = 0.8,
         right_foot_location: np.array = np.zeros(3),
     ):
@@ -46,7 +46,7 @@ class HumanoidOcp:
         self.n_threads = n_threads
         self.control_type = control_type
         self.ode_solver = ode_solver
-        self.multibody_dynamics = multibody_dynamics
+        self.rigidbody_dynamics = rigidbody_dynamics
 
         if biorbd_model_path is not None:
             self.biorbd_model = biorbd.Model(biorbd_model_path)
@@ -135,7 +135,7 @@ class HumanoidOcp:
     def _set_dynamics(self):
         # warnings.warn("not implemented under this version of bioptim")
         self.dynamics.add(
-            DynamicsFcn.TORQUE_DRIVEN, multibody_dynamics=self.multibody_dynamics,
+            DynamicsFcn.TORQUE_DRIVEN,  rigidbody_dynamics=self.rigidbody_dynamics,
             with_contact=True, phase=0
         )
         # self.dynamics.add(DynamicsFcn.TORQUE_DRIVEN, with_contact=True, phase=0)
@@ -266,14 +266,14 @@ class HumanoidOcp:
             # x_bounds[0].min[n_q + 6, 1] = -5  # velocity of left shoulder negative
             # x_bounds[0].min[n_q + 5, 1] = 1e-5 # velocity of right shoulder positive
             # x_bounds[0].max[n_q + 5, 1] = 5  # velocity of right shoulder positive
-        if self.multibody_dynamics == MultiBodyDynamics.IMPLICIT:
+        if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID:
             self.u_bounds.add(
                 [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot
                 + [self.qddot_min] * self.biorbd_model.nbContacts(),
                 [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot
                 + [self.qddot_max] * self.biorbd_model.nbContacts(),
             )
-        elif self.multibody_dynamics == MultiBodyDynamics.SEMI_EXPLICIT:
+        elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
             self.u_bounds.add(
                 [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot,
                 [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot,
@@ -331,10 +331,10 @@ class HumanoidOcp:
 
     def _set_initial_controls(self, U0: np.array = None):
         if U0 is None:
-            if self.multibody_dynamics == MultiBodyDynamics.IMPLICIT:
+            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot
                                            + [5] * self.biorbd_model.nbContacts())
-            elif self.multibody_dynamics == MultiBodyDynamics.SEMI_EXPLICIT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
             else:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau)

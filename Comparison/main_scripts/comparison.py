@@ -7,7 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from bioptim import OdeSolver, SolutionIntegrator, Solver, MultiBodyDynamics
+from bioptim import OdeSolver, SolutionIntegrator, Solver, Transcription
 
 from viz import add_custom_plots
 from Comparison import integrate_sol, compute_error_single_shooting
@@ -31,7 +31,7 @@ class ComparisonParameters:
             ode_solver: Union[OdeSolver, list] = None,
             tolerance: Union[float, list] = None,
             n_shooting: Union[int, list] = None,
-            multibody_dynamics: Union[MultiBodyDynamics, list] = MultiBodyDynamics.IMPLICIT,
+            multibody_dynamics: Union[Transcription, list] = Transcription.CONSTRAINT_ID,
     ):
 
         self.biorbd_model_path = self._is_a_list(biorbd_model_path)
@@ -144,7 +144,7 @@ class ComparisonAnalysis:
                 biorbd_model_path=biorbd_model_path,
                 ode_solver=ode_solver,
                 n_shooting=n_shooting,
-                multibody_dynamics=multibody_dynamics,
+                 rigidbody_dynamics=multibody_dynamics,
             )
             cur_ocp = CurOCP.ocp
             add_custom_plots(cur_ocp)

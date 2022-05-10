@@ -196,7 +196,7 @@ def main():
     sol = ocp.solve(solv)
 
     # --- Show results --- #
-    sol.print()
+    sol.print_cost()
     # sol.animate()
     # sol.graphs(show_bounds=True)
     print("verify phase transitions")

@@ -1,6 +1,6 @@
 from humanoid_2d import Humanoid2D
 from viz import add_custom_plots
-from bioptim import OdeSolver, CostType, MultiBodyDynamics
+from bioptim import OdeSolver, CostType, Transcription
 from humanoid_ocp import HumanoidOcp
 from bioptim import Solver
 
@@ -21,7 +21,7 @@ def main():
         phase_time=time,
         n_shooting=n_shooting,
         ode_solver=ode_solver,
-        multibody_dynamics=MultiBodyDynamics.SEMI_EXPLICIT,
+        rigidbody_dynamics=Transcription.CONSTRAINT_FD,
         n_threads=n_threads,
     )
 
@@ -35,9 +35,9 @@ def main():
 
     # --- Show results --- #
     print(sol.status)
-    sol.print()
-    # sol.animate(n_frames=-1)
-    # sol.graphs(show_bounds=True)
+    sol.print_cost()
+    sol.animate(n_frames=-1)
+    sol.graphs(show_bounds=True)
 
 
 if __name__ == "__main__":

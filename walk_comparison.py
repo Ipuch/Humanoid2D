@@ -3,7 +3,7 @@ from Comparison import ComparisonAnalysis, ComparisonParameters
 import pickle
 from humanoid_2d import Humanoid2D
 from humanoid_ocp import HumanoidOcp
-from bioptim import Solver, OdeSolver, MultiBodyDynamics
+from bioptim import Solver, OdeSolver, Transcription
 
 nstep = 1
 ode_solver = [
@@ -28,7 +28,7 @@ tolerance = [
     1e-6,
 ]  # stay in scientific writting i.e. 1eX
 n_shooting = [10, 20, 40]
-multibody_dynamics = [MultiBodyDynamics.IMPLICIT, MultiBodyDynamics.SEMI_EXPLICIT, MultiBodyDynamics.EXPLICIT]
+multibody_dynamics = [Transcription.CONSTRAINT_ID, Transcription.CONSTRAINT_FD, Transcription.ODE]
 
 
 def delete_files(folder: str):
@@ -62,7 +62,7 @@ def main():
         ode_solver=ode_solver,
         tolerance=tolerance,
         n_shooting=n_shooting,
-        multibody_dynamics=multibody_dynamics,
+         rigidbody_dynamics=multibody_dynamics,
         biorbd_model_path=model_path.value,
     )
 

@@ -17,8 +17,8 @@ def main():
 
     # comp.graphs(second_parameter="n_shooting", third_parameter="implicit_dynamics", res_path=out_path, show=True)
 
-    df = comp.df[comp.df["implicit_dynamics"]==True]
-    ocp, sol = OptimalControlProgram.load(out_path + "/" + df.iloc[0].filename + '.bo')
+    df = comp.df[comp.df["implicit_dynamics"] == True]
+    ocp, sol = OptimalControlProgram.load(out_path + "/" + df.iloc[0].filename + ".bo")
     # sol.graphs()
     sol.animate()
 

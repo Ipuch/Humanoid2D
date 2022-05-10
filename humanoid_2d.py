@@ -10,6 +10,3 @@ class Humanoid2D(Enum):
     HUMANOID_8DOF = "models/Humanoid8Dof.bioMod"
     HUMANOID_9DOF = "models/Humanoid9Dof.bioMod"
     HUMANOID_10DOF = "models/Humanoid10Dof.bioMod"
-
-
-

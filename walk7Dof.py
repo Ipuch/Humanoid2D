@@ -158,10 +158,10 @@ def prepare_ocp(
     phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=2, weight=10)
     i = 0
     ii = 2
+    phase_transitions.add(anti_symmetric_cyclic_transition, first_index=3 + i, second_index=4 + i, phase_pre_idx=0)
     phase_transitions.add(
-        anti_symmetric_cyclic_transition, first_index=3 + i, second_index=4 + i, phase_pre_idx=0)
-    phase_transitions.add(
-        anti_symmetric_cyclic_transition, first_index=5 + i + ii, second_index=6 + i + ii, phase_pre_idx=0)
+        anti_symmetric_cyclic_transition, first_index=5 + i + ii, second_index=6 + i + ii, phase_pre_idx=0
+    )
 
     phase_transitions.add(
         anti_symmetric_cyclic_transition,
@@ -283,15 +283,15 @@ def main():
     i = 0
     ii = 2
 
-    print(sol.states["q"][3 + i , 0] - sol.states["q"][4 + i , -1]*180/np.pi)
-    print(sol.states["q"][4 + i , 0] - sol.states["q"][3 + i , -1]*180/np.pi)
-    print(sol.states["qdot"][3 + ii, 0] - sol.states["qdot"][4 + i , -1]*180/np.pi)
-    print(sol.states["qdot"][4 + i , 0] - sol.states["qdot"][3 + i , -1]*180/np.pi)
+    print(sol.states["q"][3 + i, 0] - sol.states["q"][4 + i, -1] * 180 / np.pi)
+    print(sol.states["q"][4 + i, 0] - sol.states["q"][3 + i, -1] * 180 / np.pi)
+    print(sol.states["qdot"][3 + ii, 0] - sol.states["qdot"][4 + i, -1] * 180 / np.pi)
+    print(sol.states["qdot"][4 + i, 0] - sol.states["qdot"][3 + i, -1] * 180 / np.pi)
 
-    print(sol.states["q"][5 + i + ii, 0] - sol.states["q"][6 + i + ii, -1]*180/np.pi)
-    print(sol.states["q"][6 + i + ii, 0] - sol.states["q"][5 + i + ii, -1]*180/np.pi)
-    print(sol.states["qdot"][5 + i + ii, 0] - sol.states["qdot"][6 + i + ii, -1]*180/np.pi)
-    print(sol.states["qdot"][6 + i + ii, 0] - sol.states["qdot"][5 + i + ii, -1]*180/np.pi)
+    print(sol.states["q"][5 + i + ii, 0] - sol.states["q"][6 + i + ii, -1] * 180 / np.pi)
+    print(sol.states["q"][6 + i + ii, 0] - sol.states["q"][5 + i + ii, -1] * 180 / np.pi)
+    print(sol.states["qdot"][5 + i + ii, 0] - sol.states["qdot"][6 + i + ii, -1] * 180 / np.pi)
+    print(sol.states["qdot"][6 + i + ii, 0] - sol.states["qdot"][5 + i + ii, -1] * 180 / np.pi)
 
 
 def plot_com(x, nlp):

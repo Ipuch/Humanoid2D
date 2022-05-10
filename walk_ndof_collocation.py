@@ -40,5 +40,6 @@ def main():
 
         compute_error_single_shooting(sol, duration=time, integrator=SolutionIntegrator.DEFAULT)
 
+
 if __name__ == "__main__":
     main()

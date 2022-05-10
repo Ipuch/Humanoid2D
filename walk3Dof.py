@@ -203,7 +203,7 @@ def main():
     print(sol.states["q"][3, 0] - sol.states["q"][4, -1])
     print(sol.states["q"][4, 0] - sol.states["q"][3, -1])
 
-    ocp.save(sol, 'understandings/ocp2')
+    ocp.save(sol, "understandings/ocp2")
 
 
 def plot_com(x, nlp):

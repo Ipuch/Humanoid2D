@@ -62,7 +62,7 @@ def main():
         ode_solver=ode_solver,
         tolerance=tolerance,
         n_shooting=n_shooting,
-         rigidbody_dynamics=multibody_dynamics,
+        rigidbody_dynamics=multibody_dynamics,
         biorbd_model_path=model_path.value,
     )
 

@@ -39,6 +39,7 @@ class HumanoidOcp:
         rigidbody_dynamics: Transcription = Transcription.ODE,
         step_length: float = 0.8,
         right_foot_location: np.array = np.zeros(3),
+        use_sx: bool = False,
     ):
         self.biorbd_model_path = biorbd_model_path
         self.n_shooting = n_shooting
@@ -105,7 +106,7 @@ class HumanoidOcp:
                 n_threads=n_threads,
                 control_type=self.control_type,
                 ode_solver=ode_solver,
-                use_sx=True,
+                use_sx=use_sx,
             )
 
     def _set_head(self):

@@ -228,8 +228,7 @@ class HumanoidOcp:
 
     def _set_phase_transition(self):
         idx = [0, 1, 2]
-        if self.has_head:
-            idx = idx.append(3)
+        idx = idx.append(3) if self.has_head else idx
 
         self.phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=idx, weight=1000)
 

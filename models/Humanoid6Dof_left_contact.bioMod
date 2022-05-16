@@ -14,14 +14,14 @@ segment Torso
     	-1    1
     	0    1.5
     	-pi/2  pi/6
-    	mass 52.8093248044798
-    	com 0 0 0.24
+    	mass 47.4
+    	com 0 0 0.18
     	inertia
-    	5 0 0
+    	6 0 0
     	0 0 0
     	0 0 0
 	mesh  0 0 0
-	mesh  0 0 0.7
+	mesh  0 0 0.56
 endsegment
 
 segment Head
@@ -40,7 +40,7 @@ segment Head
 	mesh  0 0 0
 	mesh  0 0 0.24
 endsegment
-
+	
 segment RThigh
 	parent Torso
 	rtinmatrix 0
@@ -51,7 +51,7 @@ segment RThigh
     	mass 10.6751189590988
     	com 0 0 -0.18
     	inertia
-    	0.7 0 0
+    	0.133802735675089/2 0 0
     	0 0 0
     	0 0 0
 	mesh  0 0 0
@@ -68,79 +68,11 @@ segment LThigh
     	mass 10.6751189590988
     	com 0 0 -0.18
     	inertia
-    	0.7 0 0
+    	0.348910995064714 0 0
     	0 0 0
     	0 0 0
 	mesh  0 0 0
 	mesh  0 0 -0.41
-endsegment
-
-segment RArm
-	parent Torso
-	rtinmatrix 0
-    	rt 0 0 0 xyz 0 0 0.56
-    	rotations x
-    	ranges
-    	-pi/2  pi/2
-    	mass 1.5
-    	com 0 0 -0.12
-    	inertia
-    	0.2 0 0
-    	0 0 0
-    	0 0 0
-	mesh  0 0 0
-	mesh  0 0 -0.3
-endsegment
-
-segment LArm
-	parent Torso
-	rtinmatrix 0
-    	rt 0 0 0 xyz 0 0 0.56
-    	rotations x
-    	ranges
-    	-pi/2  pi/2
-    	mass 1.5
-    	com 0 0 -0.12
-    	inertia
-    	0.2 0 0
-    	0 0 0
-    	0 0 0
-	mesh  0 0 0
-	mesh  0 0 -0.3
-endsegment
-
-segment RForearm
-	parent RArm
-	rtinmatrix 0
-    	rt 0 0 0 xyz 0 0 -0.3
-    	rotations x
-    	ranges
-    	0  pi
-    	mass 1.5
-    	com 0 0 -0.10
-    	inertia
-    	0.2 0 0
-    	0 0 0
-    	0 0 0
-	mesh  0 0 0
-	mesh  0 0 -0.2
-endsegment
-
-segment LForearm
-	parent LArm
-	rtinmatrix 0
-    	rt 0 0 0 xyz 0 0 -0.3
-    	rotations x
-    	ranges
-    	0  pi
-    	mass 1.5
-    	com 0 0 -0.10
-    	inertia
-    	0.2 0 0
-    	0 0 0
-    	0 0 0
-	mesh  0 0 0
-	mesh  0 0 -0.2
 endsegment
 
 segment RShank
@@ -153,7 +85,7 @@ segment RShank
     	mass 4.25505875898884
     	com 0 0 -0.2
     	inertia
-    	0.7 0 0
+    	0.0669013678375445 0 0
     	0 0 0
     	0 0 0
 	mesh  0 0 0
@@ -170,12 +102,13 @@ segment LShank
     	mass 4.25505875898884
     	com 0 0 -0.2
     	inertia
-    	0.7 0 0
+    	0.0669013678375445 0 0
     	0 0 0
     	0 0 0
 	mesh  0 0 0
 	mesh  0 0 -0.46
 endsegment
+
 
 contact LFoot
 	parent LShank
@@ -192,4 +125,3 @@ marker LFoot
 	parent LShank
 	position 0 0 -0.46
 endmarker
-

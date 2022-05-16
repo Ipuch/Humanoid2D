@@ -175,10 +175,7 @@ class HumanoidOcp:
         # instead of phase transition along z
         self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_COM_VELOCITY, index=2, weight=0.1)
 
-        if (
-            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
-        ):
+        if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
             self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=0, key="qdddot", weight=1e-4)
 
     def _set_constraints(self):
@@ -239,8 +236,7 @@ class HumanoidOcp:
         self.x_bounds = BoundsList()
         self.x_bounds.add(
             bounds=QAndQDotAndQDDotBounds(self.biorbd_model)
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
             else QAndQDotBounds(self.biorbd_model)
         )
         nq = self.n_q
@@ -305,8 +301,10 @@ class HumanoidOcp:
             )
         elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
             self.u_bounds.add(
-                [self.tau_min] * self.n_tau + [self.qdddot_min] * self.n_qddot,
-                [self.tau_max] * self.n_tau + [self.qdddot_max] * self.n_qddot,
+                [self.tau_min] * self.n_tau
+                + [self.qdddot_min] * self.n_qddot,
+                [self.tau_max] * self.n_tau
+                + [self.qdddot_max] * self.n_qddot,
             )
         else:
             self.u_bounds.add([self.tau_min] * self.n_tau, [self.tau_max] * self.n_tau)
@@ -334,10 +332,7 @@ class HumanoidOcp:
         X0end = []
         X0end.extend(self.q0end)
         X0end.extend(qdot0)
-        if (
-            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
-        ):
+        if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
             X0i.extend([0] * self.n_qddot)
             X0end.extend([0] * self.n_qddot)
             # X0i.extend([0] * self.n_qddot + [0] * self.biorbd_model.nbContacts())
@@ -382,7 +377,10 @@ class HumanoidOcp:
                     + [5] * self.biorbd_model.nbContacts()
                 )
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
-                self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
+                self.u_init = InitialGuess(
+                    [self.tau_init] * self.n_tau
+                    + [self.qdddot_init] * self.n_qdddot
+                )
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
                 self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
             else:

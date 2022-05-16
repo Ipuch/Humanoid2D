@@ -314,6 +314,10 @@ class HumanoidOcp:
         self.u_bounds[0][:3, :] = 0
 
     def _set_initial_guesses(self):
+        """
+        Set initial guess for the optimization problem.
+        """
+
         # --- Initial guess --- #
         q0 = [0] * self.n_q
         # Torso over the floor and bent
@@ -354,43 +358,42 @@ class HumanoidOcp:
 
     def _set_initial_states(self, X0: np.array = None):
         if X0 is None:
-            self.x_init = InitialGuess([0] * (self.n_q + self.n_q))
+            self.x_init.add([0] * (self.n_q + self.n_q))
         else:
             if X0.shape[1] != self.n_shooting + 1:
                 X0 = self._interpolate_initial_states(X0)
 
-            if self.ode_solver.is_direct_shooting:
-                self.x_init = InitialGuess(X0, interpolation=InterpolationType.EACH_FRAME)
-            else:
+            if not self.ode_solver.is_direct_shooting:
                 n = self.ode_solver.polynomial_degree
                 X0 = np.repeat(X0, n + 1, axis=1)
                 X0 = X0[:, :-n]
-                self.x_init = InitialGuess(X0, interpolation=InterpolationType.EACH_FRAME)
+
+            self.x_init.add(X0, interpolation=InterpolationType.EACH_FRAME)
 
     def _set_initial_controls(self, U0: np.array = None):
         if U0 is None:
             if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID:
-                self.u_init = InitialGuess(
+                self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qddot_init] * self.n_qddot
                     + [5] * self.biorbd_model.nbContacts()
                 )
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT:
-                self.u_init = InitialGuess(
+                self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qdddot_init] * self.n_qdddot
                     + [5] * self.biorbd_model.nbContacts()
                 )
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
-                self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
+                self.u_init.add([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
-                self.u_init = InitialGuess([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
+                self.u_init.add([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
             else:
-                self.u_init = InitialGuess([self.tau_init] * self.n_tau)
+                self.u_init.add([self.tau_init] * self.n_tau)
         else:
             if U0.shape[1] != self.n_shooting:
                 U0 = self._interpolate_initial_controls(U0)
-            self.u_init = InitialGuess(U0, interpolation=InterpolationType.EACH_FRAME)
+            self.u_init.add(U0, interpolation=InterpolationType.EACH_FRAME)
 
     def _interpolate_initial_states(self, X0: np.array):
         print("interpolating initial states to match the number of shooting nodes")

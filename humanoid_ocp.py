@@ -176,8 +176,8 @@ class HumanoidOcp:
         self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_COM_VELOCITY, index=2, weight=0.1)
 
         if (
-            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
         ):
             self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=0, key="qdddot", weight=1e-4)
 
@@ -239,8 +239,8 @@ class HumanoidOcp:
         self.x_bounds = BoundsList()
         self.x_bounds.add(
             bounds=QAndQDotAndQDDotBounds(self.biorbd_model)
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
             else QAndQDotBounds(self.biorbd_model)
         )
         nq = self.n_q
@@ -294,7 +294,7 @@ class HumanoidOcp:
                 [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot,
                 [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot,
             )
-        elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT:
+        elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
             self.u_bounds.add(
                 [self.tau_min] * self.n_tau
                 + [self.qdddot_min] * self.n_qddot
@@ -303,7 +303,7 @@ class HumanoidOcp:
                 + [self.qdddot_max] * self.n_qddot
                 + [self.qddot_max] * self.biorbd_model.nbContacts(),
             )
-        elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
+        elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
             self.u_bounds.add(
                 [self.tau_min] * self.n_tau + [self.qdddot_min] * self.n_qddot,
                 [self.tau_max] * self.n_tau + [self.qdddot_max] * self.n_qddot,
@@ -339,8 +339,8 @@ class HumanoidOcp:
         X0end.extend(self.q0end)
         X0end.extend(qdot0)
         if (
-            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+            self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+            or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
         ):
             X0i.extend([0] * self.n_qddot)
             X0end.extend([0] * self.n_qddot)
@@ -378,13 +378,13 @@ class HumanoidOcp:
                     + [self.qddot_init] * self.n_qddot
                     + [5] * self.biorbd_model.nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
                 self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qdddot_init] * self.n_qdddot
                     + [5] * self.biorbd_model.nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)

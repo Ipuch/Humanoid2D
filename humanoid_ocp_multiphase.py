@@ -78,6 +78,7 @@ class HumanoidOcpMultiPhase:
             self.tau_min, self.tau_init, self.tau_max = -500, 0, 500
             self.qddot_min, self.qddot_init, self.qddot_max = -1000, 0, 1000
             self.qdddot_min, self.qdddot_init, self.qdddot_max = -10000, 0, 10000
+            self.fext_min, self.fext_init, self.fext_max = -10000, 0, 10000
 
             self.right_foot_location = right_foot_location
             self.step_length = step_length
@@ -122,6 +123,8 @@ class HumanoidOcpMultiPhase:
                 u_bounds=self.u_bounds,
                 objective_functions=self.objective_functions,
                 constraints=self.constraints,
+                phase_transitions=self.phase_transitions,
+                multinode_constraints=self.multinode_constraints,
                 n_threads=n_threads,
                 control_type=self.control_type,
                 ode_solver=ode_solver,
@@ -174,56 +177,32 @@ class HumanoidOcpMultiPhase:
         idx_stability = [0, 1, 2, 3] if self.has_head else [0, 1, 2]
 
         # torso stability
-        self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, index=idx_stability, weight=0.01, phase=0)
-        if self.nb_phases == 2:
-            self.objective_functions.add(
-                ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, index=idx_stability, weight=0.01, phase=1
-            )
+        for i in range(self.nb_phases):
+            self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, index=idx_stability, weight=0.01, phase=i)
 
         # head stability
-        if self.has_head:
-            self.objective_functions.add(
-                ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, derivative=True, phase=0, index=3, weight=0.01
-            )
-            self.objective_functions.add(
-                ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", phase=0, index=3, weight=0.01
-            )
-            if self.nb_phases == 2:
+            if self.has_head:
                 self.objective_functions.add(
-                    ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, derivative=True, phase=1, index=3, weight=0.01
+                    ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, derivative=True, index=3, weight=0.01, phase=i
                 )
                 self.objective_functions.add(
-                    ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", phase=1, index=3, weight=0.01
+                    ObjectiveFcn.Lagrange.MINIMIZE_STATE, key="qdot", index=3, weight=0.01, phase=i
                 )
 
-        # keep velocity CoM around 1.5 m/s
-        self.objective_functions.add(
-            ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=1.5, node=Node.START, weight=1000
-        )
-        self.objective_functions.add(
-            ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=1.5, node=Node.END, weight=1000
-        )
-        if self.nb_phases == 2:
+            # keep velocity CoM around 1.5 m/s
+            com_velocity = 1.3  # old 1.5
             self.objective_functions.add(
-                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=1.5, node=Node.START, phase=1, weight=1000
+                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=com_velocity, node=Node.START, weight=1000, phase=i
             )
             self.objective_functions.add(
-                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=1.5, node=Node.END, phase=1, weight=1000
+                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=com_velocity, node=Node.END, weight=1000, phase=i
             )
 
-        # instead of phase transition along z
-        self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_COM_ACCELERATION, index=2, weight=0.1, phase=0)
-        if self.nb_phases == 2:
-            self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_COM_ACCELERATION, index=2, weight=0.1, phase=1)
-            # self.objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=2, weight=1, phase=1, target=0)
-
-        if (
-                self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-                or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
-        ):
-            self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=0, key="qdddot", weight=1e-4)
-            if self.nb_phases == 2:
-                self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=1, key="qdddot", weight=1e-4)
+            if (
+                    self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+                    or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
+            ):
+                self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=i, key="qdddot", weight=1e-4)
 
     def _set_constraints(self):
         # --- Constraints --- #
@@ -336,7 +315,35 @@ class HumanoidOcpMultiPhase:
                 second_node=Node.END,
                 weight=1e5,
             )
-            self.phase_transitions.add(PhaseTransitionFcn.IMPACT)
+            self.multinode_constraints.add(MultinodeConstraintFcn.COM_EQUALITY,
+                                           phase_first_idx=0,
+                                           phase_second_idx=1,
+                                           first_node=Node.END,
+                                           second_node=Node.START,
+                                           weight=1e5,
+                                           index=2)
+            self.multinode_constraints.add(MultinodeConstraintFcn.COM_EQUALITY,
+                                           phase_first_idx=0,
+                                           phase_second_idx=1,
+                                           first_node=Node.START,
+                                           second_node=Node.END,
+                                           weight=1e5,
+                                           index=2)
+            self.multinode_constraints.add(MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
+                                           phase_first_idx=0,
+                                           phase_second_idx=1,
+                                           first_node=Node.START,
+                                           second_node=Node.END,
+                                           weight=1e5,
+                                           index=2)
+            self.multinode_constraints.add(MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
+                                           phase_first_idx=0,
+                                           phase_second_idx=1,
+                                           first_node=Node.START,
+                                           second_node=Node.END,
+                                           weight=2e5,
+                                           index=2)
+            # self.phase_transitions.add(PhaseTransitionFcn.IMPACT)
         else:
             self.phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=idx, weight=1000)
 
@@ -344,15 +351,15 @@ class HumanoidOcpMultiPhase:
         self.x_bounds = BoundsList()
         self.x_bounds.add(
             bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-               or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+               or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
             else QAndQDotBounds(self.biorbd_model[0])
         )
         if self.nb_phases == 2:
             self.x_bounds.add(
                 bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
-                if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-                   or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+                if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+                   or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
                 else QAndQDotBounds(self.biorbd_model[0])
             )
 
@@ -386,26 +393,26 @@ class HumanoidOcpMultiPhase:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau
                     + [self.qddot_min] * self.n_qddot
-                    + [self.qddot_min] * self.biorbd_model[0].nbContacts(),
+                    + [self.fext_min] * self.biorbd_model[0].nbContacts(),
                     [self.tau_max] * self.n_tau
                     + [self.qddot_max] * self.n_qddot
-                    + [self.qddot_max] * self.biorbd_model[i].nbContacts(),
+                    + [self.fext_max] * self.biorbd_model[i].nbContacts(),
                 )
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot,
                     [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot,
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau
                     + [self.qdddot_min] * self.n_qddot
-                    + [self.qddot_min] * self.biorbd_model[i].nbContacts(),
+                    + [self.fext_min] * self.biorbd_model[i].nbContacts(),
                     [self.tau_max] * self.n_tau
                     + [self.qdddot_max] * self.n_qddot
-                    + [self.qddot_max] * self.biorbd_model[i].nbContacts(),
+                    + [self.fext_max] * self.biorbd_model[i].nbContacts(),
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau + [self.qdddot_min] * self.n_qddot,
                     [self.tau_max] * self.n_tau + [self.qdddot_max] * self.n_qddot,
@@ -438,7 +445,7 @@ class HumanoidOcpMultiPhase:
                     self.biorbd_model_path[1], np.array(q0), self.initial_right_foot_location, self.left_foot_location
                 )
                 self.q0end = set_initial_pose(
-                    self.biorbd_model_path[1], np.array(q0), self.final_left_foot_location, self.left_foot_location
+                    self.biorbd_model_path[1], np.array(q0), self.final_right_foot_location, self.left_foot_location
                 )
 
             # generalized velocities are initialized to 0
@@ -452,8 +459,8 @@ class HumanoidOcpMultiPhase:
             X0end.extend(self.q0end)
             X0end.extend(qdot0)
             if (
-                    self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT
-                    or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT
+                    self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
+                    or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
             ):
                 X0i.extend([0] * self.n_qddot)
                 X0end.extend([0] * self.n_qddot)
@@ -491,13 +498,13 @@ class HumanoidOcpMultiPhase:
                     + [self.qddot_init] * self.n_qddot
                     + [5] * self.biorbd_model[0].nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
                 self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qdddot_init] * self.n_qdddot
                     + [5] * self.biorbd_model[0].nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_QDDDOT:
+            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
             elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)

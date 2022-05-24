@@ -3,32 +3,17 @@ from Comparison import ComparisonAnalysis, ComparisonParameters
 import pickle
 from humanoid_2d import Humanoid2D
 from humanoid_ocp import HumanoidOcp
-from bioptim import Solver, OdeSolver, Transcription
+from bioptim import Solver, OdeSolver, RigidBodyDynamics
 
-nstep = 1
+nstep = 5
 ode_solver = [
     OdeSolver.RK4(n_integration_steps=nstep),
-    OdeSolver.RK4(n_integration_steps=nstep * 2),
-    OdeSolver.RK8(n_integration_steps=nstep),
-    OdeSolver.IRK(polynomial_degree=3, method="legendre"),
-    OdeSolver.IRK(polynomial_degree=9, method="legendre"),
+    OdeSolver.CVODES(),
+    OdeSolver.IRK(polynomial_degree=3, method="radau"),
     OdeSolver.COLLOCATION(polynomial_degree=3, method="legendre"),
-    OdeSolver.COLLOCATION(polynomial_degree=9, method="legendre"),
 ]
-# tolerance = [1, 1e-2, 1e-3, 1e-5, 1e-8]  # stay in scientific writting i.e. 1eX
-# Est-ce qu'il sort avant?
-# n_shooting = [5, 10, 20, 40]
-# implicit_dynamics = [False]
-# ode_solver = [
-#     OdeSolver.RK4(n_integration_steps=nstep),
-#     OdeSolver.COLLOCATION(polynomial_degree=9, method="legendre"),
-# ]
-tolerance = [
-    # 1e-2,
-    1e-6,
-]  # stay in scientific writting i.e. 1eX
-n_shooting = [10, 20, 40]
-multibody_dynamics = [Transcription.CONSTRAINT_ID, Transcription.CONSTRAINT_FD, Transcription.ODE]
+n_shooting = [30]
+rigidbody_dynamics = [RigidBodyDynamics.DAE_INVERSE_DYNAMICS, RigidBodyDynamics.DAE_FORWARD_DYNAMICS, RigidBodyDynamics.ODE]
 
 
 def delete_files(folder: str):
@@ -60,9 +45,9 @@ def main():
 
     comparison_parameters = ComparisonParameters(
         ode_solver=ode_solver,
-        tolerance=tolerance,
+        # tolerance=tolerance,
         n_shooting=n_shooting,
-        rigidbody_dynamics=multibody_dynamics,
+        rigidbody_dynamics=rigidbody_dynamics,
         biorbd_model_path=model_path.value,
     )
 

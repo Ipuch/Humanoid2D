@@ -24,7 +24,7 @@ from bioptim import (
     InterpolationType,
     PhaseTransitionList,
     PhaseTransitionFcn,
-    Transcription,
+    RigidBodyDynamics,
     MultinodeConstraint,
     MultinodeConstraintFcn,
     MultinodeConstraintList,
@@ -41,7 +41,7 @@ class HumanoidOcpMultiPhase:
             n_threads: int = 8,
             control_type: ControlType = ControlType.CONSTANT,
             ode_solver: OdeSolver = OdeSolver.COLLOCATION(),
-            rigidbody_dynamics: Transcription = Transcription.ODE,
+            rigidbody_dynamics: RigidBodyDynamics = RigidBodyDynamics.DAE_INVERSE_DYNAMICS,
             step_length: float = 0.8,
             right_foot_location: np.array = np.zeros(3),
             nb_phases: int = 1,
@@ -199,8 +199,8 @@ class HumanoidOcpMultiPhase:
             )
 
             if (
-                    self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
-                    or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
+                    self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+                    or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             ):
                 self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=i, key="qdddot", weight=1e-4)
 
@@ -351,15 +351,15 @@ class HumanoidOcpMultiPhase:
         self.x_bounds = BoundsList()
         self.x_bounds.add(
             bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
-               or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
+            if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+               or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             else QAndQDotBounds(self.biorbd_model[0])
         )
         if self.nb_phases == 2:
             self.x_bounds.add(
                 bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
-                if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
-                   or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
+                if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+                   or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
                 else QAndQDotBounds(self.biorbd_model[0])
             )
 
@@ -389,7 +389,7 @@ class HumanoidOcpMultiPhase:
                 self.x_bounds[i][6 + j + nq, 0] = 0
                 self.x_bounds[i][6 + j + nq, -1] = 0
 
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID:
+            if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau
                     + [self.qddot_min] * self.n_qddot
@@ -398,12 +398,12 @@ class HumanoidOcpMultiPhase:
                     + [self.qddot_max] * self.n_qddot
                     + [self.fext_max] * self.biorbd_model[i].nbContacts(),
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau + [self.qddot_min] * self.n_qddot,
                     [self.tau_max] * self.n_tau + [self.qddot_max] * self.n_qddot,
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau
                     + [self.qdddot_min] * self.n_qddot
@@ -412,7 +412,7 @@ class HumanoidOcpMultiPhase:
                     + [self.qdddot_max] * self.n_qddot
                     + [self.fext_max] * self.biorbd_model[i].nbContacts(),
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK:
                 self.u_bounds.add(
                     [self.tau_min] * self.n_tau + [self.qdddot_min] * self.n_qddot,
                     [self.tau_max] * self.n_tau + [self.qdddot_max] * self.n_qddot,
@@ -459,8 +459,8 @@ class HumanoidOcpMultiPhase:
             X0end.extend(self.q0end)
             X0end.extend(qdot0)
             if (
-                    self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK
-                    or self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK
+                    self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+                    or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             ):
                 X0i.extend([0] * self.n_qddot)
                 X0end.extend([0] * self.n_qddot)
@@ -492,21 +492,21 @@ class HumanoidOcpMultiPhase:
 
     def _set_initial_controls(self, U0: np.array = None, n_shooting: int = None):
         if U0 is None:
-            if self.rigidbody_dynamics == Transcription.CONSTRAINT_ID:
+            if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS:
                 self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qddot_init] * self.n_qddot
                     + [5] * self.biorbd_model[0].nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_ID_JERK:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK:
                 self.u_init.add(
                     [self.tau_init] * self.n_tau
                     + [self.qdddot_init] * self.n_qdddot
                     + [5] * self.biorbd_model[0].nbContacts()
                 )
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD_JERK:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qdddot_init] * self.n_qdddot)
-            elif self.rigidbody_dynamics == Transcription.CONSTRAINT_FD:
+            elif self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS:
                 self.u_init.add([self.tau_init] * self.n_tau + [self.qddot_init] * self.n_qddot)
             else:
                 self.u_init.add([self.tau_init] * self.n_tau)

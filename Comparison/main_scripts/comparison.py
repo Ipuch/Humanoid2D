@@ -7,7 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from bioptim import OdeSolver, SolutionIntegrator, Solver, Transcription
+from bioptim import OdeSolver, SolutionIntegrator, Solver, RigidBodyDynamics
 
 from viz import add_custom_plots
 from Comparison import integrate_sol, compute_error_single_shooting
@@ -31,14 +31,14 @@ class ComparisonParameters:
         ode_solver: Union[OdeSolver, list] = None,
         tolerance: Union[float, list] = None,
         n_shooting: Union[int, list] = None,
-        multibody_dynamics: Union[Transcription, list] = Transcription.CONSTRAINT_ID,
+        rigidbody_dynamics: Union[RigidBodyDynamics, list] = RigidBodyDynamics.DAE_INVERSE_DYNAMICS,
     ):
 
         self.biorbd_model_path = self._is_a_list(biorbd_model_path)
         self.ode_solver = self._is_a_list(ode_solver)
         self.tolerance = self._is_a_list(tolerance)
         self.n_shooting = self._is_a_list(n_shooting)
-        self.multibody_dynamics = self._is_a_list(multibody_dynamics)
+        self.rigidbody_dynamics = self._is_a_list(rigidbody_dynamics)
 
         self.parameters_compared = dict()
         self.parameters_not_compared = dict()
@@ -68,10 +68,10 @@ class ComparisonParameters:
             self.parameters_compared["n_shooting"] = self.n_shooting
         else:
             self.parameters_not_compared["n_shooting"] = self.n_shooting
-        if isinstance(self.multibody_dynamics, list):
-            self.parameters_compared["multibody_dynamics"] = self.multibody_dynamics
+        if isinstance(self.rigidbody_dynamics, list):
+            self.parameters_compared["multibody_dynamics"] = self.rigidbody_dynamics
         else:
-            self.parameters_not_compared["multibody_dynamics"] = self.multibody_dynamics
+            self.parameters_not_compared["multibody_dynamics"] = self.rigidbody_dynamics
 
     def product_generator(self):
         keys = self.parameters_compared.keys()

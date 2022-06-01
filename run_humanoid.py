@@ -1,0 +1,134 @@
+"""
+This script runs the miller optimal control problem with a given set of parameters and save the results.
+The main function is used in main_comparison.py and main_convergence.py. to run the different Miller optimal control problem.
+"""
+import numpy as np
+from bioptim import OdeSolver, CostType
+from bioptim import Solver, Shooting, RigidBodyDynamics
+from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
+import pickle
+from time import time
+
+
+def main(args: list = None, out_path_raw: str=None):
+    """
+    Main function for the miller_run.py script.
+    It runs the optimization and saves the results of a Miller Optimal Control Problem.
+
+    Parameters
+    ----------
+    args : list
+        List of arguments containing the following:
+        args[0] : biorbd_model_path
+            Path to the biorbd model.
+        args[1] : i_rand
+            Random seed.
+        args[2] : n_shooting
+            Number of shooting nodes.
+        args[3] : dynamics_type (RigidBodyDynamics)
+            Type of dynamics to use such as RigidBodyDynamics.ODE or RigidBodyDynamics.DAE_INVERSE_DYNAMICS, ...
+        args[4] : ode_solver
+            Type of ode solver to use such as OdeSolver.RK4, OdeSolver.RK2, ...
+        args[5] : nstep
+            Number of steps for the ode solver.
+        args[6] : n_threads
+            Number of threads to use.
+    out_path_raw : str
+        path to save the raw results
+    """
+    if args:
+        biorbd_model_path = args[0]
+        ode_solver = args[1]
+        n_shooting = args[2]
+        n_threads = args[3]
+        dynamics_type = args[4]
+        n_phases = args[5]
+        i_rand = args[-1]
+
+    # to handle the random multi-start of the ocp
+    np.random.seed(i_rand)
+    # --- Solve the program --- #
+    humanoid_ocp = HumanoidOcpMultiPhase(biorbd_model_path=biorbd_model_path.value,
+                                         nb_phases=n_phases,
+                                         rigidbody_dynamics=dynamics_type,
+                                         n_shooting=n_shooting,
+                                         ode_solver=ode_solver,
+                                         n_threads=n_threads,
+                                         )
+    str_ode_solver = ode_solver.__str__().replace("\n", "_")
+    filename = f"humanoid_irand{i_rand}_{n_shooting}_{str_ode_solver}"
+    outpath = f"{out_path_raw}/" + filename
+
+    # --- Solve the program --- #
+    solver = Solver.IPOPT(show_online_optim=False, show_options=dict(show_bounds=True))
+    solver.set_maximum_iterations(10000)
+    solver.set_print_level(5)
+    solver.set_linear_solver("ma57")
+
+    print(f"##########################################################")
+    print(
+        f"Solving dynamics_type={dynamics_type}, i_rand={i_rand}," f"n_shooting={n_shooting}\n"
+        f"ode_solver={str_ode_solver}, n_threads={n_threads}")
+    print(f"##########################################################")
+
+    # --- time to solve --- #
+    tic = time()
+    sol = humanoid_ocp.ocp.solve(solver)
+    toc = time() - tic
+
+    states = sol.states["all"]
+    controls = sol.controls["all"]
+    parameters = sol.parameters["all"]
+
+    sol.print_cost()
+
+    print(f"##########################################################")
+    print(
+        f"Time to solve dynamics_type={dynamics_type}, i_rand={i_rand}," f"n_shooting={n_shooting}\n"
+        f"ode_solver={str_ode_solver}, n_threads={n_threads}"
+        f"\n {toc}sec\n"
+    )
+    print(f"##########################################################")
+
+    # --- Save the results --- #
+
+    # integrer la dynamique direct
+    sol_integrated = sol.integrate(
+        shooting_type=Shooting.MULTIPLE, keep_intermediate_points=True, merge_phases=True, continuous=False
+    )
+
+    q_integrated = sol_integrated.states["q"]
+    qdot_integrated = sol_integrated.states["qdot"]
+    if dynamics_type == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK:
+        qddot_integrated = sol_integrated.states["qddot"]
+    else:
+        qddot_integrated = np.nan
+
+    f = open(f"{outpath}.pckl", "wb")
+    data = {
+        "model_path": biorbd_model_path,
+        "irand": i_rand,
+        "extra_obj": extra_obj,
+        "computation_time": toc,
+        "cost": sol.cost,
+        "detailed_cost": sol.detailed_cost,
+        "iterations": sol.iterations,
+        "status": sol.status,
+        "states": sol.states,
+        "controls": sol.controls,
+        "parameters": sol.parameters,
+        "dynamics_type": dynamics_type,
+        "q_integrated": q_integrated,
+        "qdot_integrated": qdot_integrated,
+        "qddot_integrated": qddot_integrated,
+        "n_shooting": n_shooting,
+        "n_theads": n_threads,
+    }
+    pickle.dump(data, f)
+    f.close()
+
+    miller.ocp.save(sol, f"{outpath}.bo")
+
+
+if __name__ == "__main__":
+    main()

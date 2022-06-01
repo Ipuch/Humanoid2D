@@ -69,9 +69,9 @@ class ComparisonParameters:
         else:
             self.parameters_not_compared["n_shooting"] = self.n_shooting
         if isinstance(self.rigidbody_dynamics, list):
-            self.parameters_compared["multibody_dynamics"] = self.rigidbody_dynamics
+            self.parameters_compared["rigidbody_dynamics"] = self.rigidbody_dynamics
         else:
-            self.parameters_not_compared["multibody_dynamics"] = self.rigidbody_dynamics
+            self.parameters_not_compared["rigidbody_dynamics"] = self.rigidbody_dynamics
 
     def product_generator(self):
         keys = self.parameters_compared.keys()
@@ -131,10 +131,10 @@ class ComparisonAnalysis:
             n_shooting = (
                 param["n_shooting"] if "n_shooting" in param else self.Parameters.parameters_not_compared["n_shooting"]
             )
-            multibody_dynamics = (
-                param["multibody_dynamics"]
-                if "multibody_dynamics" in param
-                else self.Parameters.parameters_not_compared["multibody_dynamics"]
+            rigidbody_dynamics = (
+                param["rigidbody_dynamics"]
+                if "rigidbody_dynamics" in param
+                else self.Parameters.parameters_not_compared["rigidbody_dynamics"]
             )
             tol = param["tolerance"] if "tolerance" in param else self.Parameters.parameters_not_compared["tolerance"]
 
@@ -142,10 +142,10 @@ class ComparisonAnalysis:
             print(bo_file)
 
             CurOCP = self.Ocp(
-                biorbd_model_path=biorbd_model_path,
+                biorbd_model_path=biorbd_model_path.value,
                 ode_solver=ode_solver,
                 n_shooting=n_shooting,
-                rigidbody_dynamics=multibody_dynamics,
+                rigidbody_dynamics=rigidbody_dynamics,
             )
             cur_ocp = CurOCP.ocp
             add_custom_plots(cur_ocp)
@@ -165,7 +165,7 @@ class ComparisonAnalysis:
                 "ode_solver": ode_solver,
                 "n_shooting": n_shooting,
                 "tolerance": tol,
-                "multibody_dynamics": multibody_dynamics,
+                "rigidbody_dynamics": rigidbody_dynamics,
                 "iter": sol.iterations,
                 "time": sol.real_time_to_optimize,
                 "convergence": sol.status,

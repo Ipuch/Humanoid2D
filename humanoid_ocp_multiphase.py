@@ -57,9 +57,9 @@ class HumanoidOcpMultiPhase:
 
         if biorbd_model_path is not None:
             if nb_phases == 1:
-                self.biorbd_model = biorbd.Model(biorbd_model_path),
-                self.n_shooting = n_shooting if isinstance(n_shooting, int) else n_shooting[0]
-                self.phase_time = phase_time if isinstance(phase_time, float) else phase_time[0]
+                self.biorbd_model = (biorbd.Model(biorbd_model_path),) if isinstance(biorbd_model_path, str) else (biorbd.Model(biorbd_model_path[0]),)
+                self.n_shooting = (n_shooting,) if isinstance(n_shooting, int) else (n_shooting[0],)
+                self.phase_time = (phase_time,) if isinstance(phase_time, float) else (phase_time[0],)
             else:
                 self.biorbd_model = biorbd.Model(biorbd_model_path[0]), biorbd.Model(biorbd_model_path[1])
                 self.n_shooting = n_shooting, n_shooting if isinstance(n_shooting, int) else n_shooting
@@ -84,8 +84,8 @@ class HumanoidOcpMultiPhase:
             self.step_length = step_length
             self.initial_left_foot_location = right_foot_location - np.array([0, step_length / 2, 0])
             self.final_left_foot_location = right_foot_location + np.array([0, step_length / 2, 0])
+            self.nb_phases = nb_phases
             if nb_phases == 2:
-                self.nb_phases = 2
                 self.left_foot_location = self.final_left_foot_location
                 self.initial_right_foot_location = right_foot_location
                 self.final_right_foot_location = right_foot_location + np.array([0, step_length, 0])
@@ -271,8 +271,9 @@ class HumanoidOcpMultiPhase:
             self.constraints.add(
                 ConstraintFcn.TRACK_MARKERS,
                 index=2,
-                min_bound=toe_clearance,
-                max_bound=np.inf,
+                min_bound=toe_clearance-0.01,
+                max_bound=toe_clearance+0.01,
+                target=toe_clearance,
                 node=Node.MID,
                 marker_index="LFoot",
                 phase=0,
@@ -281,8 +282,9 @@ class HumanoidOcpMultiPhase:
                 self.constraints.add(
                     ConstraintFcn.TRACK_MARKERS,
                     index=2,
-                    min_bound=toe_clearance,
-                    max_bound=np.inf,
+                    min_bound=toe_clearance - 0.01,
+                    max_bound=toe_clearance + 0.01,
+                    target=toe_clearance,
                     node=Node.MID,
                     marker_index="RFoot",
                     phase=1,
@@ -343,7 +345,7 @@ class HumanoidOcpMultiPhase:
                                            second_node=Node.END,
                                            weight=2e5,
                                            index=2)
-            # self.phase_transitions.add(PhaseTransitionFcn.IMPACT)
+            self.phase_transitions.add(PhaseTransitionFcn.IMPACT, phase_pre_idx=0)
         else:
             self.phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=idx, weight=1000)
 

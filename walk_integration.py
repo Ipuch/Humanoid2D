@@ -1,9 +1,19 @@
+import numpy as np
+
 from humanoid_2d import Humanoid2D
 from viz import add_custom_plots
 from bioptim import OdeSolver, CostType, RigidBodyDynamics
 from humanoid_ocp import HumanoidOcp
 from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 from bioptim import Solver, DefectType
+
+
+def torque_driven_dynamics(model, states: np.array, controls: np.array):
+    q = states[:model.nbQ()]
+    qdot = states[model.nbQ():]
+    tau = controls
+    qddot = model.ForwardDynamics(q, qdot, tau).to_array()
+    return np.vstack((qdot, qddot))
 
 
 def main():
@@ -46,13 +56,12 @@ def main():
                               solution=sol,
                               state_keys=["q", "qdot"],
                               control_keys=["tau"],
-                              parameters_keys=None,
-                              function=None)
+                              function=torque_driven_dynamics)
+    q = integration.integrate()
+    print(q.states["q"])
 
-
-    # sol.animate(n_frames=0)
-    # sol.graphs(show_bounds=True)
-
+    # ça plante pas à vérifier ;)
 
 if __name__ == "__main__":
     main()
+

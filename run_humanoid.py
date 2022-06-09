@@ -3,10 +3,21 @@ This script runs the miller optimal control problem with a given set of paramete
 The main function is used in main_comparison.py and main_convergence.py. to run the different Miller optimal control problem.
 """
 import numpy as np
-from bioptim import Solver, Shooting, RigidBodyDynamics
-from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 import pickle
 from time import time
+
+import biorbd
+from bioptim import Solver, Shooting, RigidBodyDynamics, Shooting, SolutionIntegrator
+from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
+from integration_function import Integration
+
+
+def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
+    q = states[: model.nbQ()]
+    qdot = states[model.nbQ() :]
+    tau = controls
+    qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()
+    return np.hstack((qdot, qddot))
 
 
 def main(args: list = None, out_path_raw: str = None):
@@ -99,19 +110,29 @@ def main(args: list = None, out_path_raw: str = None):
     sol_integrated = sol.integrate(
         shooting_type=Shooting.MULTIPLE, keep_intermediate_points=True, merge_phases=True, continuous=False
     )
+    integration = Integration(
+        ocp=humanoid_ocp.ocp,
+        solution=sol,
+        state_keys=["q", "qdot"],
+        control_keys=["tau"],
+        function=torque_driven_dynamics,
+    )
 
-    q_integrated = sol_integrated.states["q"]
-    qdot_integrated = sol_integrated.states["qdot"]
-    if dynamics_type == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK:
-        qddot_integrated = sol_integrated.states["qddot"]
-    else:
-        qddot_integrated = np.nan
+    out = integration.integrate(
+        shooting_type=Shooting.SINGLE_CONTINUOUS,
+        keep_intermediate_points=False,
+        merge_phases=False,
+        continuous=True,
+        integrator=SolutionIntegrator.SCIPY_DOP853,
+    )
+
+    q_integrated = out.states["q"]
+    qdot_integrated = out.states["qdot"]
 
     f = open(f"{outpath}.pckl", "wb")
     data = {
         "model_path": biorbd_model_path,
         "irand": i_rand,
-        "extra_obj": extra_obj,
         "computation_time": toc,
         "cost": sol.cost,
         "detailed_cost": sol.detailed_cost,
@@ -123,14 +144,14 @@ def main(args: list = None, out_path_raw: str = None):
         "dynamics_type": dynamics_type,
         "q_integrated": q_integrated,
         "qdot_integrated": qdot_integrated,
-        "qddot_integrated": qddot_integrated,
+        # "qddot_integrated": qddot_integrated,
         "n_shooting": n_shooting,
         "n_theads": n_threads,
     }
     pickle.dump(data, f)
     f.close()
 
-    miller.ocp.save(sol, f"{outpath}.bo")
+    humanoid_ocp.ocp.save(sol, f"{outpath}.bo")
 
 
 if __name__ == "__main__":

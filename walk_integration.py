@@ -11,7 +11,7 @@ from bioptim import Solver, DefectType
 
 def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
     q = states[: model.nbQ()]
-    qdot = states[model.nbQ():]
+    qdot = states[model.nbQ() :]
     tau = controls
     qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()
     return np.hstack((qdot, qddot))
@@ -80,13 +80,12 @@ def main():
     print(sol.states["q"] - out.states["q"])
 
     import matplotlib.pyplot as plt
+
     plt.figure(1)
     plt.plot(sol.states["q"][0, :])
     plt.plot(out.states["q"][0, :])
     plt.show()
     # plot in red
-
-
 
     # ça plante pas à vérifier ;)
 

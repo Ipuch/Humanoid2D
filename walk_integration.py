@@ -1,3 +1,4 @@
+import biorbd
 import numpy as np
 
 from humanoid_2d import Humanoid2D
@@ -8,12 +9,12 @@ from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 from bioptim import Solver, DefectType
 
 
-def torque_driven_dynamics(model, states: np.array, controls: np.array):
+def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
     q = states[: model.nbQ()]
-    qdot = states[model.nbQ() :]
+    qdot = states[model.nbQ():]
     tau = controls
-    qddot = model.ForwardDynamics(q, qdot, tau).to_array()
-    return np.vstack((qdot, qddot))
+    qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()
+    return np.hstack((qdot, qddot))
 
 
 def main():
@@ -42,7 +43,7 @@ def main():
     # humanoid.ocp.print()
 
     solv = Solver.IPOPT(show_online_optim=False, show_options=dict(show_bounds=True))
-    solv.set_maximum_iterations(0)
+    solv.set_maximum_iterations(1000)
     solv.set_linear_solver("ma57")
     solv.set_print_level(5)
     sol = humanoid.ocp.solve(solv)
@@ -52,17 +53,43 @@ def main():
     sol.print_cost()
 
     from integration_function import Integration
-    integration = Integration(ocp=humanoid.ocp,
-                              solution=sol,
-                              state_keys=["q", "qdot"],
-                              control_keys=["tau"],
-                              function=torque_driven_dynamics)
-    q = integration.integrate()
-    print(q.states["q"])
+    from bioptim import Shooting, SolutionIntegrator
+
+    sol.integrate(
+        shooting_type=Shooting.SINGLE_CONTINUOUS,
+        keep_intermediate_points=False,
+        merge_phases=False,
+        continuous=True,
+        integrator=SolutionIntegrator.SCIPY_DOP853,
+    )
+    print(sol.states["q"])
+
+    integration = Integration(
+        ocp=humanoid.ocp, solution=sol, state_keys=["q", "qdot"], control_keys=["tau"], function=torque_driven_dynamics
+    )
+
+    out = integration.integrate(
+        shooting_type=Shooting.SINGLE_CONTINUOUS,
+        keep_intermediate_points=False,
+        merge_phases=False,
+        continuous=True,
+        integrator=SolutionIntegrator.SCIPY_DOP853,
+    )
+    print(out.states["q"])
+
+    print(sol.states["q"] - out.states["q"])
+
+    import matplotlib.pyplot as plt
+    plt.figure(1)
+    plt.plot(sol.states["q"][0, :])
+    plt.plot(out.states["q"][0, :])
+    plt.show()
+    # plot in red
+
+
 
     # ça plante pas à vérifier ;)
 
 
 if __name__ == "__main__":
     main()
-

@@ -5,8 +5,8 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy import interpolate as sci_interp
 
-
 from bioptim import SolutionIntegrator, Shooting, OptimalControlProgram, Solution, ControlType
+import biorbd
 
 
 class Integration:
@@ -97,6 +97,7 @@ class Integration:
 
         self.ocp = ocp
         self.ns = [nlp.ns for nlp in self.ocp.nlp]
+        self.model = [biorbd.Model(nlp.model.path().absolutePath().to_string()) for nlp in self.ocp.nlp]
 
         self.control_keys = control_keys
         self.state_keys = state_keys
@@ -385,7 +386,7 @@ class Integration:
                     t_eval = np.linspace(t_init, t_end, n_points) if keep_intermediate_points else [t_init, t_end]
                     integrated = solve_ivp(
                         # lambda t, x: np.array(nlp.dynamics_func(x, u, params))[:, 0],
-                        lambda t, x: np.array(self.function(x, u, params))[:, 0],
+                        lambda t, x: np.array(self.function(self.model[p], x, u, params)),
                         [t_init, t_end],
                         x0,
                         t_eval=t_eval,

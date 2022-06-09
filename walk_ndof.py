@@ -42,13 +42,15 @@ def main():
     sol.print_cost()
 
     from integration_function import Integration
-    integration = Integration(ocp=humanoid.ocp,
-                              solution=sol,
-                              state_keys=["q", "qdot"],
-                              control_keys=["tau"],
-                              parameters_keys=None,
-                              function=None)
 
+    integration = Integration(
+        ocp=humanoid.ocp,
+        solution=sol,
+        state_keys=["q", "qdot"],
+        control_keys=["tau"],
+        parameters_keys=None,
+        function=None,
+    )
 
     # sol.animate(n_frames=0)
     # sol.graphs(show_bounds=True)

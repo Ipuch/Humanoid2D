@@ -21,10 +21,7 @@ cpu_number = cpu_count()
 n_thread = 8
 param = dict(
     model_str=[Humanoid2D.HUMANOID_10DOF],
-    ode_solver=[OdeSolver.RK4(n_integration_steps=1),
-                OdeSolver.CVODES,
-                OdeSolver.IRK,
-                OdeSolver.COLLOCATION],
+    ode_solver=[OdeSolver.RK4(n_integration_steps=1), OdeSolver.CVODES, OdeSolver.IRK, OdeSolver.COLLOCATION],
     n_shooting=[30],
     n_thread=[n_thread],
     dynamic_type=[RigidBodyDynamics.ODE],

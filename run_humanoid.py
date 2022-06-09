@@ -3,14 +3,13 @@ This script runs the miller optimal control problem with a given set of paramete
 The main function is used in main_comparison.py and main_convergence.py. to run the different Miller optimal control problem.
 """
 import numpy as np
-from bioptim import OdeSolver, CostType
 from bioptim import Solver, Shooting, RigidBodyDynamics
 from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 import pickle
 from time import time
 
 
-def main(args: list = None, out_path_raw: str=None):
+def main(args: list = None, out_path_raw: str = None):
     """
     Main function for the miller_run.py script.
     It runs the optimization and saves the results of a Miller Optimal Control Problem.
@@ -48,13 +47,14 @@ def main(args: list = None, out_path_raw: str=None):
     # to handle the random multi-start of the ocp
     np.random.seed(i_rand)
     # --- Solve the program --- #
-    humanoid_ocp = HumanoidOcpMultiPhase(biorbd_model_path=biorbd_model_path.value,
-                                         nb_phases=n_phases,
-                                         rigidbody_dynamics=dynamics_type,
-                                         n_shooting=n_shooting,
-                                         ode_solver=ode_solver,
-                                         n_threads=n_threads,
-                                         )
+    humanoid_ocp = HumanoidOcpMultiPhase(
+        biorbd_model_path=biorbd_model_path.value,
+        nb_phases=n_phases,
+        rigidbody_dynamics=dynamics_type,
+        n_shooting=n_shooting,
+        ode_solver=ode_solver,
+        n_threads=n_threads,
+    )
     str_ode_solver = ode_solver.__str__().replace("\n", "_")
     filename = f"humanoid_irand{i_rand}_{n_shooting}_{str_ode_solver}"
     outpath = f"{out_path_raw}/" + filename
@@ -67,8 +67,10 @@ def main(args: list = None, out_path_raw: str=None):
 
     print(f"##########################################################")
     print(
-        f"Solving dynamics_type={dynamics_type}, i_rand={i_rand}," f"n_shooting={n_shooting}\n"
-        f"ode_solver={str_ode_solver}, n_threads={n_threads}")
+        f"Solving dynamics_type={dynamics_type}, i_rand={i_rand},"
+        f"n_shooting={n_shooting}\n"
+        f"ode_solver={str_ode_solver}, n_threads={n_threads}"
+    )
     print(f"##########################################################")
 
     # --- time to solve --- #
@@ -84,7 +86,8 @@ def main(args: list = None, out_path_raw: str=None):
 
     print(f"##########################################################")
     print(
-        f"Time to solve dynamics_type={dynamics_type}, i_rand={i_rand}," f"n_shooting={n_shooting}\n"
+        f"Time to solve dynamics_type={dynamics_type}, i_rand={i_rand},"
+        f"n_shooting={n_shooting}\n"
         f"ode_solver={str_ode_solver}, n_threads={n_threads}"
         f"\n {toc}sec\n"
     )

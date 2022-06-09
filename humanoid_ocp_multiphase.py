@@ -34,18 +34,18 @@ from humanoid_initial_pose import set_initial_pose
 
 class HumanoidOcpMultiPhase:
     def __init__(
-            self,
-            biorbd_model_path: Union[str, tuple[str]] = None,
-            n_shooting: Union[int, list[int]] = 10,
-            phase_time: Union[float, list[float]] = 0.3,
-            n_threads: int = 8,
-            control_type: ControlType = ControlType.CONSTANT,
-            ode_solver: OdeSolver = OdeSolver.COLLOCATION(),
-            rigidbody_dynamics: RigidBodyDynamics = RigidBodyDynamics.DAE_INVERSE_DYNAMICS,
-            step_length: float = 0.8,
-            right_foot_location: np.array = np.zeros(3),
-            nb_phases: int = 1,
-            use_sx: bool = False,
+        self,
+        biorbd_model_path: Union[str, tuple[str]] = None,
+        n_shooting: Union[int, list[int]] = 10,
+        phase_time: Union[float, list[float]] = 0.3,
+        n_threads: int = 8,
+        control_type: ControlType = ControlType.CONSTANT,
+        ode_solver: OdeSolver = OdeSolver.COLLOCATION(),
+        rigidbody_dynamics: RigidBodyDynamics = RigidBodyDynamics.DAE_INVERSE_DYNAMICS,
+        step_length: float = 0.8,
+        right_foot_location: np.array = np.zeros(3),
+        nb_phases: int = 1,
+        use_sx: bool = False,
     ):
         self.biorbd_model_path = biorbd_model_path
         self.n_shooting = n_shooting
@@ -57,7 +57,11 @@ class HumanoidOcpMultiPhase:
 
         if biorbd_model_path is not None:
             if nb_phases == 1:
-                self.biorbd_model = (biorbd.Model(biorbd_model_path),) if isinstance(biorbd_model_path, str) else (biorbd.Model(biorbd_model_path[0]),)
+                self.biorbd_model = (
+                    (biorbd.Model(biorbd_model_path),)
+                    if isinstance(biorbd_model_path, str)
+                    else (biorbd.Model(biorbd_model_path[0]),)
+                )
                 self.n_shooting = (n_shooting,) if isinstance(n_shooting, int) else (n_shooting[0],)
                 self.phase_time = (phase_time,) if isinstance(phase_time, float) else (phase_time[0],)
             else:
@@ -178,9 +182,11 @@ class HumanoidOcpMultiPhase:
 
         # torso stability
         for i in range(self.nb_phases):
-            self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, index=idx_stability, weight=0.01, phase=i)
+            self.objective_functions.add(
+                ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, index=idx_stability, weight=0.01, phase=i
+            )
 
-        # head stability
+            # head stability
             if self.has_head:
                 self.objective_functions.add(
                     ObjectiveFcn.Lagrange.MINIMIZE_QDDOT, derivative=True, index=3, weight=0.01, phase=i
@@ -192,15 +198,25 @@ class HumanoidOcpMultiPhase:
             # keep velocity CoM around 1.5 m/s
             com_velocity = 1.3  # old 1.5
             self.objective_functions.add(
-                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=com_velocity, node=Node.START, weight=1000, phase=i
+                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY,
+                index=1,
+                target=com_velocity,
+                node=Node.START,
+                weight=1000,
+                phase=i,
             )
             self.objective_functions.add(
-                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY, index=1, target=com_velocity, node=Node.END, weight=1000, phase=i
+                ObjectiveFcn.Mayer.MINIMIZE_COM_VELOCITY,
+                index=1,
+                target=com_velocity,
+                node=Node.END,
+                weight=1000,
+                phase=i,
             )
 
             if (
-                    self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
-                    or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
+                self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+                or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             ):
                 self.objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, phase=i, key="qdddot", weight=1e-4)
 
@@ -271,8 +287,8 @@ class HumanoidOcpMultiPhase:
             self.constraints.add(
                 ConstraintFcn.TRACK_MARKERS,
                 index=2,
-                min_bound=toe_clearance-0.01,
-                max_bound=toe_clearance+0.01,
+                min_bound=toe_clearance - 0.01,
+                max_bound=toe_clearance + 0.01,
                 target=toe_clearance,
                 node=Node.MID,
                 marker_index="LFoot",
@@ -317,34 +333,42 @@ class HumanoidOcpMultiPhase:
                 second_node=Node.END,
                 weight=1e5,
             )
-            self.multinode_constraints.add(MultinodeConstraintFcn.COM_EQUALITY,
-                                           phase_first_idx=0,
-                                           phase_second_idx=1,
-                                           first_node=Node.END,
-                                           second_node=Node.START,
-                                           weight=1e5,
-                                           index=2)
-            self.multinode_constraints.add(MultinodeConstraintFcn.COM_EQUALITY,
-                                           phase_first_idx=0,
-                                           phase_second_idx=1,
-                                           first_node=Node.START,
-                                           second_node=Node.END,
-                                           weight=1e5,
-                                           index=2)
-            self.multinode_constraints.add(MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
-                                           phase_first_idx=0,
-                                           phase_second_idx=1,
-                                           first_node=Node.START,
-                                           second_node=Node.END,
-                                           weight=1e5,
-                                           index=2)
-            self.multinode_constraints.add(MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
-                                           phase_first_idx=0,
-                                           phase_second_idx=1,
-                                           first_node=Node.START,
-                                           second_node=Node.END,
-                                           weight=2e5,
-                                           index=2)
+            self.multinode_constraints.add(
+                MultinodeConstraintFcn.COM_EQUALITY,
+                phase_first_idx=0,
+                phase_second_idx=1,
+                first_node=Node.END,
+                second_node=Node.START,
+                weight=1e5,
+                index=2,
+            )
+            self.multinode_constraints.add(
+                MultinodeConstraintFcn.COM_EQUALITY,
+                phase_first_idx=0,
+                phase_second_idx=1,
+                first_node=Node.START,
+                second_node=Node.END,
+                weight=1e5,
+                index=2,
+            )
+            self.multinode_constraints.add(
+                MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
+                phase_first_idx=0,
+                phase_second_idx=1,
+                first_node=Node.START,
+                second_node=Node.END,
+                weight=1e5,
+                index=2,
+            )
+            self.multinode_constraints.add(
+                MultinodeConstraintFcn.COM_VELOCITY_EQUALITY,
+                phase_first_idx=0,
+                phase_second_idx=1,
+                first_node=Node.START,
+                second_node=Node.END,
+                weight=2e5,
+                index=2,
+            )
             self.phase_transitions.add(PhaseTransitionFcn.IMPACT, phase_pre_idx=0)
         else:
             self.phase_transitions.add(PhaseTransitionFcn.CYCLIC, index=idx, weight=1000)
@@ -354,14 +378,14 @@ class HumanoidOcpMultiPhase:
         self.x_bounds.add(
             bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
             if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
-               or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
+            or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             else QAndQDotBounds(self.biorbd_model[0])
         )
         if self.nb_phases == 2:
             self.x_bounds.add(
                 bounds=QAndQDotAndQDDotBounds(self.biorbd_model[0])
                 if self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
-                   or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
+                or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
                 else QAndQDotBounds(self.biorbd_model[0])
             )
 
@@ -376,7 +400,7 @@ class HumanoidOcpMultiPhase:
                 self.x_bounds[i][nq + 3, -1] = 0  # head velocity zero at the end
 
             if self.has_knee:
-                self.x_bounds[i].min[nq - 2: nq, [0, -1]] = -np.pi / 8  # driving knees
+                self.x_bounds[i].min[nq - 2 : nq, [0, -1]] = -np.pi / 8  # driving knees
 
             # Supervised shoulders
             if self.has_shoulder:
@@ -461,8 +485,8 @@ class HumanoidOcpMultiPhase:
             X0end.extend(self.q0end)
             X0end.extend(qdot0)
             if (
-                    self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
-                    or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
+                self.rigidbody_dynamics == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK
+                or self.rigidbody_dynamics == RigidBodyDynamics.DAE_FORWARD_DYNAMICS_JERK
             ):
                 X0i.extend([0] * self.n_qddot)
                 X0end.extend([0] * self.n_qddot)

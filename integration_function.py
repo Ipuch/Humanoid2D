@@ -11,67 +11,70 @@ from bioptim import SolutionIntegrator, Shooting, OptimalControlProgram, Solutio
 
 class Integration:
     """
-        Integration
+    Integration
 
-        Attributes
-        ----------
-        ocp: SimplifiedOCP
-            The OCP simplified
-        ns: list
-            The number of shooting point for each phase
-        is_interpolated: bool
-            If the current structure is interpolated
-        is_integrated: bool
-            If the current structure is integrated
-        is_merged: bool
-            If the phases were merged
-        vector: np.ndarray
-            The data in the vector format
-        _states: list
-            The data structure that holds the states
-        _controls: list
-            The data structure that holds the controls
-        parameters: dict
-            The data structure that holds the parameters
-        phase_time: list
-            The total time for each phases
+    Attributes
+    ----------
+    ocp: SimplifiedOCP
+        The OCP simplified
+    ns: list
+        The number of shooting point for each phase
+    is_interpolated: bool
+        If the current structure is interpolated
+    is_integrated: bool
+        If the current structure is integrated
+    is_merged: bool
+        If the phases were merged
+    vector: np.ndarray
+        The data in the vector format
+    _states: list
+        The data structure that holds the states
+    _controls: list
+        The data structure that holds the controls
+    parameters: dict
+        The data structure that holds the parameters
+    phase_time: list
+        The total time for each phases
 
-        Methods
-        -------
-        copy(self, skip_data: bool = False) -> Any
-            Create a deepcopy of the Solution
-        @property
-        states(self) -> Union[list, dict]
-            Returns the state in list if more than one phases, otherwise it returns the only dict
-        @property
-        controls(self) -> Union[list, dict]
-            Returns the controls in list if more than one phases, otherwise it returns the only dict
-        integrate(self, shooting_type: Shooting = Shooting.MULTIPLE, keep_intermediate_points: bool = True,
-                  merge_phases: bool = False, continuous: bool = True) -> Solution
-            Integrate the states
-        interpolate(self, n_frames: Union[int, list, tuple]) -> Solution
-            Interpolate the states
-        merge_phases(self) -> Solution
-            Get a data structure where all the phases are merged into one
-        _merge_phases(self, skip_states: bool = False, skip_controls: bool = False) -> tuple
-            Actually performing the phase merging
-        _complete_control(self)
-            Controls don't necessarily have dimensions that matches the states. This method aligns them
-        graphs(self, automatically_organize: bool, show_bounds: bool,
-               show_now: bool, shooting_type: Shooting)
-            Show the graphs of the simulation
-        animate(self, n_frames: int = 0, show_now: bool = True, **kwargs: Any) -> Union[None, list]
-            Animate the simulation
-        print(self, cost_type: CostType = CostType.ALL)
-            Print the objective functions and/or constraints to the console
-        """
-    def __init__(self,
-                 ocp: OptimalControlProgram,
-                 solution: Solution,
-                 state_keys: list = None,
-                 control_keys: list = None,
-                 function: Callable = None,
-                 **extra_variables):
+    Methods
+    -------
+    copy(self, skip_data: bool = False) -> Any
+        Create a deepcopy of the Solution
+    @property
+    states(self) -> Union[list, dict]
+        Returns the state in list if more than one phases, otherwise it returns the only dict
+    @property
+    controls(self) -> Union[list, dict]
+        Returns the controls in list if more than one phases, otherwise it returns the only dict
+    integrate(self, shooting_type: Shooting = Shooting.MULTIPLE, keep_intermediate_points: bool = True,
+              merge_phases: bool = False, continuous: bool = True) -> Solution
+        Integrate the states
+    interpolate(self, n_frames: Union[int, list, tuple]) -> Solution
+        Interpolate the states
+    merge_phases(self) -> Solution
+        Get a data structure where all the phases are merged into one
+    _merge_phases(self, skip_states: bool = False, skip_controls: bool = False) -> tuple
+        Actually performing the phase merging
+    _complete_control(self)
+        Controls don't necessarily have dimensions that matches the states. This method aligns them
+    graphs(self, automatically_organize: bool, show_bounds: bool,
+           show_now: bool, shooting_type: Shooting)
+        Show the graphs of the simulation
+    animate(self, n_frames: int = 0, show_now: bool = True, **kwargs: Any) -> Union[None, list]
+        Animate the simulation
+    print(self, cost_type: CostType = CostType.ALL)
+        Print the objective functions and/or constraints to the console
+    """
+
+    def __init__(
+        self,
+        ocp: OptimalControlProgram,
+        solution: Solution,
+        state_keys: list = None,
+        control_keys: list = None,
+        function: Callable = None,
+        **extra_variables,
+    ):
         """
         Parameters
         ----------
@@ -158,12 +161,12 @@ class Integration:
         return self._controls[0] if len(self._controls) == 1 else self._controls
 
     def integrate(
-            self,
-            shooting_type: Shooting = Shooting.SINGLE_CONTINUOUS,
-            keep_intermediate_points: bool = False,
-            merge_phases: bool = False,
-            continuous: bool = True,
-            integrator: SolutionIntegrator = SolutionIntegrator.DEFAULT,
+        self,
+        shooting_type: Shooting = Shooting.SINGLE_CONTINUOUS,
+        keep_intermediate_points: bool = False,
+        merge_phases: bool = False,
+        continuous: bool = True,
+        integrator: SolutionIntegrator = SolutionIntegrator.DEFAULT,
     ) -> Any:
         """
         Integrate the states
@@ -219,12 +222,12 @@ class Integration:
         return out
 
     def _generate_time_vector(
-            self,
-            time_phase,
-            keep_intermediate_points: bool,
-            continuous: bool,
-            merge_phases: bool,
-            integrator: SolutionIntegrator,
+        self,
+        time_phase,
+        keep_intermediate_points: bool,
+        continuous: bool,
+        merge_phases: bool,
+        integrator: SolutionIntegrator,
     ):
         """
         Generate time integration vector, at which the points from intagrate are evaluated
@@ -302,12 +305,12 @@ class Integration:
         return new
 
     def __perform_integration(
-            self,
-            shooting_type: Shooting,
-            keep_intermediate_points: bool,
-            continuous: bool,
-            merge_phases: bool,
-            integrator: SolutionIntegrator,
+        self,
+        shooting_type: Shooting,
+        keep_intermediate_points: bool,
+        continuous: bool,
+        merge_phases: bool,
+        integrator: SolutionIntegrator,
     ):
         n_direct_collocation = sum([nlp.ode_solver.is_direct_collocation for nlp in self.ocp.nlp])
 
@@ -371,7 +374,7 @@ class Integration:
                 if nlp.control_type == ControlType.CONSTANT:
                     u = self._controls[p]["all"][:, s]
                 elif nlp.control_type == ControlType.LINEAR_CONTINUOUS:
-                    u = self._controls[p]["all"][:, s: s + 2]
+                    u = self._controls[p]["all"][:, s : s + 2]
                 else:
                     raise NotImplementedError(f"ControlType {nlp.control_type} " f"not yet implemented in integrating")
 
@@ -416,7 +419,8 @@ class Integration:
                     #     next_state_col = s + 1
 
                     cols_in_out = slice(
-                        cols_in_out[0], cols_in_out[1] + 1 if continuous and keep_intermediate_points else cols_in_out[1]
+                        cols_in_out[0],
+                        cols_in_out[1] + 1 if continuous and keep_intermediate_points else cols_in_out[1],
                     )
                     out._states[p]["all"][:, cols_in_out] = integrated
                     x0 = (
@@ -501,7 +505,7 @@ class Integration:
                 if key == "all":
                     continue
                 n_elements = data_states[p][key].shape[0]
-                out._states[p][key] = out._states[p]["all"][offset: offset + n_elements]
+                out._states[p][key] = out._states[p]["all"][offset : offset + n_elements]
                 offset += n_elements
 
         out.is_interpolated = True

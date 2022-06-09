@@ -71,11 +71,13 @@ def main():
     f.close()
 
     # comp.graphs(res_path=out_path, fixed_parameters={"multibody_dynamics": True}, show=True)
-    comp.graphs(first_parameter="ode_solver",
-                second_parameter="biorbd_model_path",
-                third_parameter="rigidbody_dynamics",
-                res_path=out_path,
-                show=True)
+    comp.graphs(
+        first_parameter="ode_solver",
+        second_parameter="biorbd_model_path",
+        third_parameter="rigidbody_dynamics",
+        res_path=out_path,
+        show=True,
+    )
     # comp.graphs(second_parameter="n_shooting", third_parameter="rigidbody_dynamics", res_path=out_path, show=True)
     # comp.graphs(second_parameter="n_shooting", third_parameter="rigidbody_dynamics", res_path=out_path, show=True)
 

@@ -9,8 +9,8 @@ from bioptim import Solver, DefectType
 
 
 def torque_driven_dynamics(model, states: np.array, controls: np.array):
-    q = states[:model.nbQ()]
-    qdot = states[model.nbQ():]
+    q = states[: model.nbQ()]
+    qdot = states[model.nbQ() :]
     tau = controls
     qddot = model.ForwardDynamics(q, qdot, tau).to_array()
     return np.vstack((qdot, qddot))
@@ -61,6 +61,7 @@ def main():
     print(q.states["q"])
 
     # ça plante pas à vérifier ;)
+
 
 if __name__ == "__main__":
     main()

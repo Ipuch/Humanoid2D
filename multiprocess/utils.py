@@ -64,7 +64,7 @@ def run_pool(calls: list, pool_nb: int):
     pool_nb : int
         The number of processes to be used in parallel
     """
-    # run_humanoid(calls[0], out_path_raw=out_path)
+    # run_humanoid(calls[0])
     with Pool(pool_nb) as p:  # should be 4
         p.map(run_humanoid, calls)
 

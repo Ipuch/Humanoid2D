@@ -7,11 +7,13 @@ from humanoid_2d import Humanoid2D
 from multiprocessing import Pool, cpu_count
 from datetime import date
 from bioptim import OdeSolver, RigidBodyDynamics
+from pathlib import Path
+
 
 Date = date.today()
 Date = Date.strftime("%d-%m-%y")
 
-out_path_raw = "../Humanoid2D_results/raw_" + Date
+out_path_raw = Path("../Humanoid2D_results/raw_" + Date)
 try:
     os.mkdir(out_path_raw)
 except:

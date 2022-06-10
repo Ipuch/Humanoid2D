@@ -52,8 +52,8 @@ def main(args: list = None):
         n_threads = args[3]
         dynamics_type = args[4]
         n_phases = args[5]
-        i_rand = args[6]
-        out_path_raw = args[7]
+        out_path_raw = args[6]
+        i_rand = args[7]
     else:
         biorbd_model_path = args[0]
         ode_solver = args[1]
@@ -61,8 +61,8 @@ def main(args: list = None):
         n_threads = args[3]
         dynamics_type = args[4]
         n_phases = args[5]
-        i_rand = args[6]
-        out_path_raw = args[7]
+        out_path_raw = args[6]
+        i_rand = args[7]
 
     # to handle the random multi-start of the ocp
     np.random.seed(i_rand)

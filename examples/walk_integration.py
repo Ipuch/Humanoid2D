@@ -1,12 +1,10 @@
 import biorbd
 import numpy as np
 
-from humanoid_2d import Humanoid2D
-from viz import add_custom_plots
 from bioptim import OdeSolver, CostType, RigidBodyDynamics
-from humanoid_ocp import HumanoidOcp
-from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 from bioptim import Solver, DefectType
+
+from humanoid_2d import Humanoid2D, Integration, add_custom_plots, HumanoidOcp, HumanoidOcpMultiPhase
 
 
 def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
@@ -52,7 +50,6 @@ def main():
     print(sol.status)
     sol.print_cost()
 
-    from integration_function import Integration
     from bioptim import Shooting, SolutionIntegrator
 
     sol.integrate(

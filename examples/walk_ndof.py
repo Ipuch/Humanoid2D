@@ -1,9 +1,5 @@
-from humanoid_2d import Humanoid2D
-from viz import add_custom_plots
-from bioptim import OdeSolver, CostType, RigidBodyDynamics
-from humanoid_ocp import HumanoidOcp
-from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
-from bioptim import Solver, DefectType
+from bioptim import OdeSolver, CostType, RigidBodyDynamics, Solver, DefectType
+from humanoid_2d import Humanoid2D, add_custom_plots, HumanoidOcp, HumanoidOcpMultiPhase
 
 
 def main():
@@ -41,7 +37,7 @@ def main():
     print(sol.status)
     sol.print_cost()
 
-    from integration_function import Integration
+    from humanoid_2d import Integration
 
     integration = Integration(
         ocp=humanoid.ocp,

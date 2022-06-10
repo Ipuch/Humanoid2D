@@ -29,7 +29,7 @@ from bioptim import (
     MultinodeConstraintFcn,
     MultinodeConstraintList,
 )
-from humanoid_initial_pose import set_initial_pose
+from ..initial_guess.humanoid_initial_pose import set_initial_pose
 
 
 class HumanoidOcpMultiPhase:

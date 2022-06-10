@@ -8,8 +8,7 @@ from time import time
 
 import biorbd
 from bioptim import Solver, Shooting, RigidBodyDynamics, Shooting, SolutionIntegrator
-from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
-from integration_function import Integration
+from humanoid_2d import HumanoidOcpMultiPhase, Integration
 
 
 def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
@@ -20,7 +19,7 @@ def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.a
     return np.hstack((qdot, qddot))
 
 
-def main(args: list = None, out_path_raw: str = None):
+def main(args: list = None):
     """
     Main function for the miller_run.py script.
     It runs the optimization and saves the results of a Miller Optimal Control Problem.

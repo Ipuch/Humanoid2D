@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 import pickle
 from itertools import product
-from humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 from run_humanoid import main as run_humanoid
 
 

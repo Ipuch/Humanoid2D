@@ -14,7 +14,7 @@ def main():
     Date = date.today()
     Date = Date.strftime("%d-%m-%y")
 
-    out_path_raw = Path("../Humanoid2D_results/raw_" + Date)
+    out_path_raw = Path(Path(__file__).parent.__str__() + f"/../../Humanoid2D_results/raw_{Date}")
     try:
         os.mkdir(out_path_raw)
     except:

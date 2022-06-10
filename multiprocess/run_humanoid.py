@@ -133,12 +133,12 @@ def main(args: list = None):
         integrator=SolutionIntegrator.SCIPY_DOP853,
     )
 
-    q_integrated = out.states["q"]
-    qdot_integrated = out.states["qdot"]
+    sol_integrated = sol.integrate(shooting_type=Shooting.MULTIPLE, keep_intermediate_points=False, merge_phases=False, continuous=False)
 
     f = open(f"{outpath}.pckl", "wb")
     data = {
         "model_path": biorbd_model_path,
+        "phase_time": humanoid_ocp.phase_time,
         "irand": i_rand,
         "computation_time": toc,
         "cost": sol.cost,
@@ -148,10 +148,14 @@ def main(args: list = None):
         "states": sol.states,
         "controls": sol.controls,
         "parameters": sol.parameters,
+        "time": out.time_vector,
         "dynamics_type": dynamics_type,
-        "q_integrated": q_integrated,
-        "qdot_integrated": qdot_integrated,
-        # "qddot_integrated": qddot_integrated,
+        "ode_solver": ode_solver,
+        "q": sol.states["q"], # todo: need to ensure this is the same size for each ode solver
+        "qdot": sol.states["qdot"],
+        "q_integrated": out.states["q"],
+        "qdot_integrated": out.states["qdot"],
+        # "qddot_integrated": out.states["qdot"],
         "n_shooting": n_shooting,
         "n_theads": n_threads,
     }

@@ -10,7 +10,7 @@ HumanoidOcpMultiPhase
 
 """
 
-from .models.humanoid_2d import Humanoid2D
+from .models.enums import Humanoid2D
 from .ocp.viz import add_custom_plots
 from .ocp.humanoid_ocp import HumanoidOcp
 from .ocp.humanoid_ocp_multiphase import HumanoidOcpMultiPhase

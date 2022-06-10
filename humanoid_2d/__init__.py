@@ -17,5 +17,3 @@ from .ocp.humanoid_ocp_multiphase import HumanoidOcpMultiPhase
 from .initial_guess.humanoid_initial_pose import set_initial_pose
 
 from .bioptim_plugin.integration_function import Integration
-
-

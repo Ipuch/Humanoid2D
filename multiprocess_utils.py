@@ -64,8 +64,6 @@ def run_pool(calls: list, pool_nb: int):
         The list of calls to be run
     pool_nb : int
         The number of processes to be used in parallel
-    out_path : str
-        The path to the output folder
     """
     # run_humanoid(calls[0], out_path_raw=out_path)
     with Pool(pool_nb) as p:  # should be 4

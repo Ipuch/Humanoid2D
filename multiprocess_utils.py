@@ -54,7 +54,7 @@ def generate_calls(
     return all_calls
 
 
-def run_pool(calls: list, pool_nb: int, out_path: str):
+def run_pool(calls: list, pool_nb: int):
     """
     Run the pool of processes
 
@@ -67,9 +67,9 @@ def run_pool(calls: list, pool_nb: int, out_path: str):
     out_path : str
         The path to the output folder
     """
-    run_humanoid(calls[0], out_path_raw=out_path)
-    # with Pool(pool_nb) as p:  # should be 4
-    #     p.map(run_humanoid(calls, out_path_raw=out_path))
+    # run_humanoid(calls[0], out_path_raw=out_path)
+    with Pool(pool_nb) as p:  # should be 4
+        p.map(run_humanoid, calls)
 
 
 def run_the_missing_ones(

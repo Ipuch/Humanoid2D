@@ -28,6 +28,7 @@ param = dict(
     n_thread=[n_thread],
     dynamic_type=[RigidBodyDynamics.ODE],
     n_phases=[1],
+    out_path=out_path_raw.absolute().__str__(),
 )
 calls = 5
 
@@ -38,7 +39,7 @@ my_calls = generate_calls(
 )
 
 my_pool_number = int(cpu_number / n_thread)
-run_pool(my_calls, my_pool_number, out_path=out_path_raw)
+run_pool(my_calls, my_pool_number)
 
 # run_the_missing_ones(
 #     out_path_raw, Date, n_shooting, ode_solver, nsteps, n_thread, model_str, my_pool_number

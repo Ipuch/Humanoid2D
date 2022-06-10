@@ -43,8 +43,8 @@ def main(args: list = None, out_path_raw: str = None):
             Number of steps for the ode solver.
         args[6] : n_threads
             Number of threads to use.
-    out_path_raw : str
-        path to save the raw results
+        args[7] : out_path_raw
+            Path to save the raw results.
     """
     if args:
         biorbd_model_path = args[0]
@@ -53,7 +53,8 @@ def main(args: list = None, out_path_raw: str = None):
         n_threads = args[3]
         dynamics_type = args[4]
         n_phases = args[5]
-        i_rand = args[-1]
+        i_rand = args[6]
+        out_path_raw = args[7]
 
     # to handle the random multi-start of the ocp
     np.random.seed(i_rand)

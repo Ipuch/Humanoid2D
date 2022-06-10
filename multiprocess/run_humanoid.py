@@ -116,9 +116,7 @@ def main(args: list = None):
     # --- Save the results --- #
 
     # integrer la dynamique direct
-    sol_integrated = sol.integrate(
-        shooting_type=Shooting.MULTIPLE, keep_intermediate_points=True, merge_phases=True, continuous=False
-    )
+
     integration = Integration(
         ocp=humanoid_ocp.ocp,
         solution=sol,

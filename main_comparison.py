@@ -20,9 +20,9 @@ except:
     print("../Humanoid2D_results/raw_" + Date + " is already created ")
 
 cpu_number = cpu_count()
-n_thread = 8
+n_thread = 1
 param = dict(
-    model_str=[Humanoid2D.HUMANOID_10DOF],
+    model_str=[Humanoid2D.HUMANOID_3DOF],
     ode_solver=[OdeSolver.RK4(n_integration_steps=1), OdeSolver.CVODES, OdeSolver.IRK, OdeSolver.COLLOCATION],
     n_shooting=[30],
     n_thread=[n_thread],
@@ -30,7 +30,7 @@ param = dict(
     n_phases=[1],
     out_path=out_path_raw.absolute().__str__(),
 )
-calls = 5
+calls = int(2)
 
 
 my_calls = generate_calls(

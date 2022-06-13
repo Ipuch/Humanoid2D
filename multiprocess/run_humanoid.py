@@ -75,7 +75,7 @@ def main(args: list = None):
         ode_solver=ode_solver,
         n_threads=n_threads,
     )
-    str_ode_solver = ode_solver.__str__().replace("\n", "_")
+    str_ode_solver = ode_solver.__str__().replace("\n", "_").replace(" ", "_")
     filename = f"humanoid_irand{i_rand}_{n_shooting}_{str_ode_solver}"
     outpath = f"{out_path_raw}/" + filename
 
@@ -133,7 +133,7 @@ def main(args: list = None):
         integrator=SolutionIntegrator.SCIPY_DOP853,
     )
 
-    sol_integrated = sol.integrate(shooting_type=Shooting.MULTIPLE, keep_intermediate_points=False, merge_phases=False, continuous=False)
+    # sol_integrated = sol.integrate(shooting_type=Shooting.MULTIPLE, keep_intermediate_points=False, merge_phases=False, continuous=False)
 
     f = open(f"{outpath}.pckl", "wb")
     data = {
@@ -151,8 +151,8 @@ def main(args: list = None):
         "time": out.time_vector,
         "dynamics_type": dynamics_type,
         "ode_solver": ode_solver,
-        "q": sol.states["q"], # todo: need to ensure this is the same size for each ode solver
-        "qdot": sol.states["qdot"],
+        "q": sol.states_no_intermediate["q"],
+        "qdot": sol.states_no_intermediate["qdot"],
         "q_integrated": out.states["q"],
         "qdot_integrated": out.states["qdot"],
         # "qddot_integrated": out.states["qdot"],

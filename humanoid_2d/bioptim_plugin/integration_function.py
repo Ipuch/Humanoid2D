@@ -434,7 +434,7 @@ class Integration:
                 out._states[p]["all"][:, -1] = self._states[p]["all"][:, -1]
 
             # Dispatch the integrated values to all the keys
-            for key in nlp.states:
+            for key in self.state_keys:
                 out._states[p][key] = out._states[p]["all"][nlp.states[key].index, :]
 
             sum_states_len += out._states[p]["all"].shape[1]

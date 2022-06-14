@@ -76,20 +76,25 @@ def main(args: list = None):
         n_threads=n_threads,
     )
     str_ode_solver = ode_solver.__str__().replace("\n", "_").replace(" ", "_")
-    filename = f"humanoid_irand{i_rand}_{n_shooting}_{str_ode_solver}"
+    str_dynamics_type = dynamics_type.__str__().replace("RigidBodyDynamics.", "").replace("\n", "_").replace(" ", "_")
+    filename = f"sol_irand{i_rand}_{n_shooting}_{str_ode_solver}_{str_dynamics_type}"
     outpath = f"{out_path_raw}/" + filename
 
     # --- Solve the program --- #
     solver = Solver.IPOPT(show_online_optim=False, show_options=dict(show_bounds=True))
     solver.set_maximum_iterations(10000)
     solver.set_print_level(5)
+    solver.set_constraint_tolerance(1e-10)
     solver.set_linear_solver("ma57")
 
     print(f"##########################################################")
     print(
-        f"Solving dynamics_type={dynamics_type}, i_rand={i_rand},"
-        f"n_shooting={n_shooting}\n"
-        f"ode_solver={str_ode_solver}, n_threads={n_threads}"
+        f"Solving ... \n"
+        f"i_rand={i_rand},\n"
+        f"dynamics_type={dynamics_type},\n"
+        f"ode_solver={str_ode_solver},\n"
+        f"n_shooting={n_shooting},\n"
+        f"n_threads={n_threads}\n"
     )
     print(f"##########################################################")
 
@@ -104,14 +109,16 @@ def main(args: list = None):
 
     sol.print_cost()
 
-    print(f"##########################################################")
+    print(f"#################################################### done ")
     print(
-        f"Time to solve dynamics_type={dynamics_type}, i_rand={i_rand},"
-        f"n_shooting={n_shooting}\n"
-        f"ode_solver={str_ode_solver}, n_threads={n_threads}"
-        f"\n {toc}sec\n"
+        f"Solved in {toc} sec \n"
+        f"i_rand={i_rand},\n"
+        f"dynamics_type={dynamics_type},\n"
+        f"ode_solver={str_ode_solver},\n"
+        f"n_shooting={n_shooting},\n"
+        f"n_threads={n_threads}\n"
     )
-    print(f"##########################################################")
+    print(f"##################################################### done ")
 
     # --- Save the results --- #
 
@@ -132,8 +139,6 @@ def main(args: list = None):
         continuous=True,
         integrator=SolutionIntegrator.SCIPY_DOP853,
     )
-
-    # sol_integrated = sol.integrate(shooting_type=Shooting.MULTIPLE, keep_intermediate_points=False, merge_phases=False, continuous=False)
 
     f = open(f"{outpath}.pckl", "wb")
     data = {

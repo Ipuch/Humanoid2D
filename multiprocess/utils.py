@@ -1,5 +1,5 @@
 from typing import Union
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 import os
 from pathlib import Path
 import pickle
@@ -158,6 +158,20 @@ def run_the_missing_ones(
 
 
 def set_product_list(parameters_compared: dict = None):
+    """
+    Set the list of parameters to be used in the product function
+
+    Parameters
+    ----------
+    parameters_compared : dict, optional
+        The parameters to be compared, by default None
+
+    Returns
+    -------
+    list_parameters: list
+        The list of parameters to be used in the product function
+
+    """
 
     vals = parameters_compared.values()
     keys = parameters_compared.keys()

@@ -72,6 +72,7 @@ class Integration:
         solution: Solution,
         state_keys: list = None,
         control_keys: list = None,
+        fext_keys: list = None,
         function: Callable = None,
         **extra_variables,
     ):
@@ -84,6 +85,8 @@ class Integration:
             The state keys
         control_keys: list
             The control keys
+        fext_keys: list
+            The external forces keys
         function: Callable
             The function that will be used to evaluate the system dynamics
         extra_variables: dict
@@ -101,10 +104,12 @@ class Integration:
 
         self.control_keys = control_keys
         self.state_keys = state_keys
+        self.fext_keys = fext_keys
 
         # Extract the data now for further use
         self._states = self._update_variable_with_keys(solution._states, self.state_keys)
         self._controls = self._update_variable_with_keys(solution._controls, self.control_keys)
+        self._fext = self._update_variable_with_keys(solution._controls, self.fext_keys) if self.fext_keys is not None else None
         self.parameters = solution.parameters
         self.vector = solution.vector
         self.time_vector = None
@@ -379,6 +384,8 @@ class Integration:
                 else:
                     raise NotImplementedError(f"ControlType {nlp.control_type} " f"not yet implemented in integrating")
 
+                fext = self._fext[p]["all"][:, s] if self._fext is not None else None
+
                 if integrator != SolutionIntegrator.DEFAULT:
                     t_init = sum(out.phase_time[:p]) / nlp.ns
                     t_end = sum(out.phase_time[: (p + 2)]) / nlp.ns
@@ -386,7 +393,7 @@ class Integration:
                     t_eval = np.linspace(t_init, t_end, n_points) if keep_intermediate_points else [t_init, t_end]
                     integrated = solve_ivp(
                         # lambda t, x: np.array(nlp.dynamics_func(x, u, params))[:, 0],
-                        lambda t, x: np.array(self.function(self.model[p], x, u, params)),
+                        lambda t, x: np.array(self.function(self.model[p], x, u, params, fext)),
                         [t_init, t_end],
                         x0,
                         t_eval=t_eval,

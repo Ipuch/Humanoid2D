@@ -129,6 +129,7 @@ def main(args: list = None):
         solution=sol,
         state_keys=["q", "qdot"],
         control_keys=["tau"],
+        fext_keys=["fext"] if dynamics_type == RigidBodyDynamics.DAE_INVERSE_DYNAMICS_JERK else None,
         function=torque_driven_dynamics,
     )
 

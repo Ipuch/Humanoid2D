@@ -7,15 +7,20 @@ import pickle
 from time import time
 
 import biorbd
-from bioptim import Solver, Shooting, RigidBodyDynamics, Shooting, SolutionIntegrator
+from bioptim import Solver, Shooting, RigidBodyDynamics, Shooting, SolutionIntegrator, BiorbdInterface
 from humanoid_2d import HumanoidOcpMultiPhase, Integration
 
 
-def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array):
+def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array, fext: np.array) -> np.ndarray:
     q = states[: model.nbQ()]
-    qdot = states[model.nbQ() :]
+    qdot = states[model.nbQ():]
     tau = controls
-    qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()
+    if fext is None:
+        qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()
+    else:
+        fext_vec = biorbd.VecBiorbdVector()
+        fext_vec.append(fext)
+        qddot = model.ForwardDynamics(q, qdot, tau, biorbd.VecBiorbdSpatialVector(), fext_vec).to_array()
     return np.hstack((qdot, qddot))
 
 

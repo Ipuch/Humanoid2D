@@ -71,8 +71,6 @@ def main(args: list = None):
         out_path_raw = args[6]
         i_rand = args[7]
 
-    # to handle the random multi-start of the ocp
-    np.random.seed(i_rand)
     # --- Solve the program --- #
     humanoid_ocp = HumanoidOcpMultiPhase(
         biorbd_model_path=biorbd_model_path.value,
@@ -81,6 +79,7 @@ def main(args: list = None):
         n_shooting=n_shooting,
         ode_solver=ode_solver,
         n_threads=n_threads,
+        seed=i_rand,
     )
     str_ode_solver = ode_solver.__str__().replace("\n", "_").replace(" ", "_")
     str_dynamics_type = dynamics_type.__str__().replace("RigidBodyDynamics.", "").replace("\n", "_").replace(" ", "_")

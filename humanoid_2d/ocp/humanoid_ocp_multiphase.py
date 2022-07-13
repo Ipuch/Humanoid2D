@@ -28,6 +28,7 @@ from bioptim import (
     MultinodeConstraint,
     MultinodeConstraintFcn,
     MultinodeConstraintList,
+    NoisedInitialGuess,
 )
 from ..initial_guess.humanoid_initial_pose import set_initial_pose
 
@@ -45,6 +46,7 @@ class HumanoidOcpMultiPhase:
         step_length: float = 0.8,
         right_foot_location: np.array = np.zeros(3),
         nb_phases: int = 1,
+        seed: int = None,
         use_sx: bool = False,
     ):
         self.biorbd_model_path = biorbd_model_path
@@ -116,14 +118,44 @@ class HumanoidOcpMultiPhase:
             self._set_boundary_conditions()
             self._set_initial_guesses()
 
+            if seed is not None:
+                self.xn_init = InitialGuessList()
+                self.un_init = InitialGuessList()
+                for init, bounds in zip(self.x_init, self.x_bounds):
+                    self.xn_init.add(
+                        NoisedInitialGuess(
+                            initial_guess=init.init,
+                            init_interpolation=init.type,
+                            bounds=bounds,
+                            noise_magnitude=1,
+                            n_elements=init.shape[0],
+                            n_shooting=self.n_shooting[0],
+                            bound_push=0.1,
+                            seed=seed,
+                        )
+                    )
+                for init, bounds in zip(self.u_init, self.u_bounds):
+                    self.un_init.add(
+                        NoisedInitialGuess(
+                            initial_guess=init.init,
+                            init_interpolation=init.type,
+                            bounds=bounds,
+                            noise_magnitude=1,
+                            n_elements=init.shape[0],
+                            n_shooting=self.n_shooting[0] - 1,
+                            bound_push=0.1,
+                            seed=seed,
+                        )
+                    )
+
             self.ocp = OptimalControlProgram(
                 self.biorbd_model,
                 self.dynamics,
                 self.n_shooting,
                 self.phase_time,
-                x_init=self.x_init,
+                x_init=self.x_init if seed is None else self.xn_init,
                 x_bounds=self.x_bounds,
-                u_init=self.u_init,
+                u_init=self.u_init if seed is None else self.un_init,
                 u_bounds=self.u_bounds,
                 objective_functions=self.objective_functions,
                 constraints=self.constraints,

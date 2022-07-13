@@ -19,7 +19,7 @@ from utils import (
     compute_error_single_shooting,
 )
 
-out_path_raw = "../../Humanoid2D_results/raw_10-06-22"
+out_path_raw = "../../Humanoid2D_results/raw_21-06-22"
 model = Humanoid2D.HUMANOID_3DOF
 
 # open files
@@ -61,14 +61,33 @@ for i, file in enumerate(files):
 
         # compute error
         model = biorbd.Model(data["model_path"].value[0])
+
         data["translation_error"], data["rotation_error"] = compute_error_single_shooting(model=model,
                                       n_shooting=data["n_shooting"],
                                       time=np.array(data["time"]),
                                       q=data["q"],
                                       q_integrated=data["q_integrated"])
 
+        print(data["q"].shape)
+        print(data["q_integrated"].shape)
+
         df_dictionary = pd.DataFrame([data])
         df_results = pd.concat([df_results, df_dictionary], ignore_index=True)
+
+
+# set parameters of pandas to display all the columns of the pandas dataframe in the console
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.width", None)
+pd.set_option("display.max_colwidth", None)
+# don't return line with columns of pandas dataframe
+pd.set_option("display.expand_frame_repr", False)
+# display all the rows of the dataframe
+pd.set_option("display.max_rows", 20)
+
+print(df_results[["dynamics_type", "n_shooting", "ode_solver", "translation_error", "rotation_error"]])
+df_results[["dynamics_type", "ode_solver", "translation_error", "rotation_error"]].to_csv(f"{out_path_raw}/results.csv")
+# print(df_results[["ode_solver", ]])
 
 # fill new columns
 # n_row = len(df_results)

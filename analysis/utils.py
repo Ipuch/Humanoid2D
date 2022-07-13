@@ -40,9 +40,7 @@ def compute_error_single_shooting(
     duration = time[-1] if duration is None else duration
 
     if time[-1] < duration:
-        raise ValueError(
-            f"Single shooting integration duration must be smaller than ocp duration :{time[-1]} s"
-        )
+        raise ValueError(f"Single shooting integration duration must be smaller than ocp duration :{time[-1]} s")
 
     # get the index of translation and rotation dof
     trans_idx = []

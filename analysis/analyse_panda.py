@@ -62,11 +62,13 @@ for i, file in enumerate(files):
         # compute error
         model = biorbd.Model(data["model_path"].value[0])
 
-        data["translation_error"], data["rotation_error"] = compute_error_single_shooting(model=model,
-                                      n_shooting=data["n_shooting"],
-                                      time=np.array(data["time"]),
-                                      q=data["q"],
-                                      q_integrated=data["q_integrated"])
+        data["translation_error"], data["rotation_error"] = compute_error_single_shooting(
+            model=model,
+            n_shooting=data["n_shooting"],
+            time=np.array(data["time"]),
+            q=data["q"],
+            q_integrated=data["q_integrated"],
+        )
 
         print(data["q"].shape)
         print(data["q_integrated"].shape)

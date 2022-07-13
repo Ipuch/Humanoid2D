@@ -109,7 +109,9 @@ class Integration:
         # Extract the data now for further use
         self._states = self._update_variable_with_keys(solution._states, self.state_keys)
         self._controls = self._update_variable_with_keys(solution._controls, self.control_keys)
-        self._fext = self._update_variable_with_keys(solution._controls, self.fext_keys) if self.fext_keys is not None else None
+        self._fext = (
+            self._update_variable_with_keys(solution._controls, self.fext_keys) if self.fext_keys is not None else None
+        )
         self.parameters = solution.parameters
         self.vector = solution.vector
         self.time_vector = None

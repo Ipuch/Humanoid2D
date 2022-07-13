@@ -11,9 +11,11 @@ from bioptim import Solver, Shooting, RigidBodyDynamics, Shooting, SolutionInteg
 from humanoid_2d import HumanoidOcpMultiPhase, Integration
 
 
-def torque_driven_dynamics(model: biorbd.Model, states: np.array, controls: np.array, params: np.array, fext: np.array) -> np.ndarray:
+def torque_driven_dynamics(
+    model: biorbd.Model, states: np.array, controls: np.array, params: np.array, fext: np.array
+) -> np.ndarray:
     q = states[: model.nbQ()]
-    qdot = states[model.nbQ():]
+    qdot = states[model.nbQ() :]
     tau = controls
     if fext is None:
         qddot = model.ForwardDynamicsConstraintsDirect(q, qdot, tau).to_array()

@@ -386,7 +386,7 @@ class Integration:
                 else:
                     raise NotImplementedError(f"ControlType {nlp.control_type} " f"not yet implemented in integrating")
 
-                fext = self._fext[p]["all"][:, s] if self._fext is not None else None
+                fext = self._fext[p]["all"][:, s] if self._fext[p]["all"].shape != (0, 0) else None
 
                 if integrator != SolutionIntegrator.DEFAULT:
                     t_init = sum(out.phase_time[:p]) / nlp.ns
